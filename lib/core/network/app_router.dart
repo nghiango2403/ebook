@@ -1,3 +1,5 @@
+import 'package:ebook/features/auth/presentation/screens/login_screen.dart';
+import 'package:ebook/features/auth/presentation/screens/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -19,10 +21,12 @@ final goRouter = GoRouter(
     GoRoute(
       path: '/login',
       name: 'login',
-      builder: (context, state) => const Scaffold(
-        backgroundColor: Colors.yellow,
-        body: Center(child: Text("TRANG LOGIN")),
-      ),
+      builder: (context, state) => LoginScreen()
+    ),
+    GoRoute(
+      path: '/register',
+      name: 'register',
+      builder: (context, state) => RegisterScreen()
     ),
   ],
   redirect: (context, state) {
