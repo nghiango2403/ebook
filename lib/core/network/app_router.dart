@@ -3,6 +3,8 @@ import 'package:ebook/features/auth/presentation/screens/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../common/screens/main_layout.dart';
+
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final goRouter = GoRouter(
@@ -10,13 +12,48 @@ final goRouter = GoRouter(
   initialLocation: '/',
   debugLogDiagnostics: true,
   routes: [
-    // Route Home
-    GoRoute(
-      path: '/',
-      name: 'home',
-      builder: (context, state) => const Scaffold(
-        body: Center(child: Text("TRANG CHỦ")),
-      ),
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) {
+        return MainLayout(navigationShell: navigationShell);
+      },
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/',
+              name: 'home',
+              builder: (context, state) => const Center(child: Text("TỦ TRUYỆN")),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/explore',
+              name: 'explore',
+              builder: (context, state) => const Center(child: Text("KHÁM PHÁ")),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/ranking',
+              name: 'ranking',
+              builder: (context, state) => const Center(child: Text("XẾP HẠNG")),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/profile',
+              name: 'profile',
+              builder: (context, state) => const Center(child: Text("Tài khoản")),
+            ),
+          ],
+        ),
+      ],
     ),
     GoRoute(
       path: '/login',

@@ -40,7 +40,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authProvider);
 
     ref.listen<AuthState>(authProvider, (previous, next) {
-      // 1. Kiểm tra nếu có User mới (đăng nhập thành công)
       if (next.user != null && previous?.user == null) {
         context.go('/');
       }
@@ -55,12 +54,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          // Hiệu ứng Gradient nhẹ nhàng từ màu Primary
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              theme.colorScheme.primary.withOpacity(0.05),
+              theme.colorScheme.primary.withValues(alpha: 0.05),
               theme.colorScheme.surface,
             ],
           ),
@@ -74,7 +72,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header: Logo và Title theo phong cách tri thức
                     Center(
                       child: Column(
                         children: [
@@ -102,7 +99,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 50),
 
-                    // Email Field
                     Text(
                       "Email",
                       style: GoogleFonts.philosopher(
@@ -127,7 +123,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Password Field
                     Text(
                       "Mật khẩu",
                       style: GoogleFonts.philosopher(
@@ -158,23 +153,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       validator: (value) => value!.length < 6 ? "Mật khẩu quá ngắn" : null,
                     ),
 
-                    // Quên mật khẩu
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {},
-                        child: Text("Quên mật khẩu?",
-                            style: TextStyle(color: theme.colorScheme.secondary)),
-                      ),
-                    ),
                     const SizedBox(height: 20),
 
-                    // Nút Đăng nhập với hiệu ứng đổ bóng của Primary Color
                     Container(
                       decoration: BoxDecoration(
                         boxShadow: [
                           BoxShadow(
-                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.3),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -193,7 +178,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Footer: Đăng ký
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

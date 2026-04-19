@@ -54,7 +54,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await remoteDataSource.signOut();
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 
@@ -96,12 +96,12 @@ class AuthRepositoryImpl implements AuthRepository {
       } on AuthException catch (e) {
         return Left(AuthFailure(e.message ?? "Lỗi khi xác thực tài khoản"));
       } on ServerException catch (e) {
-        return Left(ServerFailure(e.message ?? "Lỗi máy chủ không xác định"));
+        return Left(ServerFailure(message: e.message ?? "Lỗi máy chủ không xác định"));
       } catch (e) {
-        return Left(ServerFailure(e.toString()));
+        return Left(ServerFailure(message: e.toString()));
       }
     } else {
-      return const Left(NetworkFailure("Vui lòng kiểm tra kết nối Internet của bạn"));
+      return const Left(NetworkFailure(message: "Vui lòng kiểm tra kết nối Internet của bạn"));
     }
   }
 }
