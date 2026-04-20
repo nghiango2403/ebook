@@ -8,7 +8,7 @@ class BookEntity extends Equatable {
   final String authorId;
   final String authorName;
   final String imageUrl;
-  final String category;
+  final String categoryId;
   final int views;
   final int quantity;
   final BookStatus status;
@@ -26,7 +26,7 @@ class BookEntity extends Equatable {
     required this.authorId,
     required this.authorName,
     required this.imageUrl,
-    required this.category,
+    required this.categoryId,
     required this.views,
     required this.quantity,
     required this.status,
@@ -41,7 +41,7 @@ class BookEntity extends Equatable {
   @override
   List<Object?> get props => [
     id, title, description, authorId, authorName, imageUrl,
-    category, views, quantity, status, createdAt, updatedAt,
+    categoryId, views, quantity, status, createdAt, updatedAt,
     viewsDay, viewsWeek, totalBookmarks, totalFollows
   ];
 }

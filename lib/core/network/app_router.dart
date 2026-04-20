@@ -1,8 +1,10 @@
 import 'package:ebook/features/auth/presentation/screens/login_screen.dart';
 import 'package:ebook/features/auth/presentation/screens/register_screen.dart';
+import 'package:ebook/features/book/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/book/presentation/screens/book_screen.dart';
 import '../common/screens/main_layout.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -31,7 +33,7 @@ final goRouter = GoRouter(
             GoRoute(
               path: '/explore',
               name: 'explore',
-              builder: (context, state) => const Center(child: Text("KHÁM PHÁ")),
+              builder: (context, state) => HomeScreen(),
             ),
           ],
         ),
@@ -55,6 +57,12 @@ final goRouter = GoRouter(
         ),
       ],
     ),
+    GoRoute(
+      path: '/book/:bookId',
+      builder: (context, state) {
+        final id = state.pathParameters['bookId']!;
+        return BookScreen(bookId: id);
+      },),
     GoRoute(
       path: '/login',
       name: 'login',
