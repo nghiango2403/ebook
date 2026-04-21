@@ -22,11 +22,13 @@ abstract class BookRemoteDataSource {
   Future<List<CommentModel>> getComments(String bookId);
   Future<String> getBookDescription(String bookId);
   Future<List<BookModel>> getBooksByAuthor(String authorName, String excludedBookId);
-  Future<void> toggleBookmark(String bookId, String userId);
+  Future<void> toggleBookmark(String bookId, String userId, DateTime createAt);
   Future<List<BookModel>> getReadingHistory(String userId, int pageSize, int offset);
   Future<List<BookModel>> getFollowedBooks(String userId, int pageSize, int offset);
-  Future<void> toggleFollow(String bookId, String userId);
+  Future<void> toggleFollow(String bookId, String userId, DateTime createAt);
   Future<List<BookModel>> getBookmarkedBooks(String userId, int pageSize, int offset);
+  Future<bool> isBookmarked(String userId, String bookId);
+  Future<bool> isFollowed(String userId, String bookId);
 }
 
 class BookRemoteDataSourceImpl implements BookRemoteDataSource {
@@ -131,33 +133,46 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   }
 
   @override
-  Future<void> toggleBookmark(String bookId, String userId) async {
+  Future<void> toggleBookmark(String bookId, String userId, DateTime createAt) async {
     final docRef = firestore.collection('users').doc(userId).collection('bookmarks').doc(bookId);
     final bookRef = firestore.collection('books').doc(bookId);
-    final doc = await docRef.get();
 
-    if (doc.exists) {
-      await docRef.delete();
-      await bookRef.update({'totalBookmarks': FieldValue.increment(-1)});
-    } else {
-      await docRef.set({'bookId': bookId, 'addedAt': Timestamp.now()});
-      await bookRef.update({'totalBookmarks': FieldValue.increment(1)});
-    }
+    return await firestore.runTransaction((transaction) async {
+      final bookmarkDoc = await transaction.get(docRef);
+
+      if (bookmarkDoc.exists) {
+        transaction.delete(docRef);
+        transaction.update(bookRef, {'totalBookmarks': FieldValue.increment(-1)});
+      } else {
+        transaction.set(docRef, {
+          'bookId': bookId,
+          'addedAt': Timestamp.fromDate(createAt),
+        });
+        transaction.update(bookRef, {'totalBookmarks': FieldValue.increment(1)});
+      }
+    });
   }
 
   @override
-  Future<void> toggleFollow(String bookId, String userId) async {
+  @override
+  Future<void> toggleFollow(String bookId, String userId, DateTime createAt) async {
     final docRef = firestore.collection('users').doc(userId).collection('following').doc(bookId);
     final bookRef = firestore.collection('books').doc(bookId);
-    final doc = await docRef.get();
 
-    if (doc.exists) {
-      await docRef.delete();
-      await bookRef.update({'totalFollows': FieldValue.increment(-1)});
-    } else {
-      await docRef.set({'bookId': bookId, 'followedAt': Timestamp.now()});
-      await bookRef.update({'totalFollows': FieldValue.increment(1)});
-    }
+    return await firestore.runTransaction((transaction) async {
+      final followDoc = await transaction.get(docRef);
+
+      if (followDoc.exists) {
+        transaction.delete(docRef);
+        transaction.update(bookRef, {'totalFollows': FieldValue.increment(-1)});
+      } else {
+        transaction.set(docRef, {
+          'bookId': bookId,
+          'followedAt': Timestamp.fromDate(createAt)
+        });
+        transaction.update(bookRef, {'totalFollows': FieldValue.increment(1)});
+      }
+    });
   }
 
   @override
@@ -209,5 +224,27 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
       }
     }
     return books;
+  }
+
+  @override
+  Future<bool> isBookmarked(String userId, String bookId) async {
+    final docSnapshot = await firestore
+        .collection('users')
+        .doc(userId)
+        .collection('bookmarks')
+        .doc(bookId)
+        .get();
+    return docSnapshot.exists;
+  }
+
+  @override
+  Future<bool> isFollowed(String userId, String bookId) async {
+    final docSnapshot = await firestore
+        .collection('users')
+        .doc(userId)
+        .collection('following')
+        .doc(bookId)
+        .get();
+    return docSnapshot.exists;
   }
 }

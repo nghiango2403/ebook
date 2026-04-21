@@ -1,5 +1,7 @@
+import 'package:ebook/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../model/book_view_model.dart';
 import '../providers/book_detail_provider.dart';
 
@@ -24,27 +26,40 @@ class _BookScreenState extends ConsumerState<BookScreen> with TickerProviderStat
   Widget build(BuildContext context) {
     final asyncBook = ref.watch(bookDetailProvider(widget.bookId));
     final theme = Theme.of(context);
-
+  ref.listen<AsyncValue<void>>(bookInteractionProvider, (previous, next) {
+  next.whenOrNull(
+    error: (err, stack) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Lỗi: ${err.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    },
+  );
+});
     return Scaffold(
       body: asyncBook.when(
-        data: (viewModel) => NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            _buildSliverAppBar(viewModel, theme, context),
-            _buildStickyTabBar(theme),
-          ],
-          body: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildIntroductionTab(viewModel, theme),
-              const Center(child: Text("Tính năng bình luận đang phát triển")),
-              const Center(child: Text("Danh sách chương đang cập nhật")),
+        data: (viewModel) => Scaffold(
+          body: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) => [
+              _buildSliverAppBar(viewModel, theme, context),
+              _buildStickyTabBar(theme),
             ],
+            body: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildIntroductionTab(viewModel, theme),
+                const Center(child: Text("Tính năng bình luận đang phát triển")),
+                const Center(child: Text("Danh sách chương đang cập nhật")),
+              ],
+            ),
           ),
+          bottomNavigationBar: _buildBottomBar(theme, viewModel),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text("Lỗi: $err")),
       ),
-      bottomNavigationBar: _buildBottomBar(theme),
     );
   }
 
@@ -127,6 +142,36 @@ class _BookScreenState extends ConsumerState<BookScreen> with TickerProviderStat
           ],
         ),
       ),
+      actions: [
+        IconButton(
+          icon: Icon(
+            viewModel.isFollowed ? Icons.favorite : Icons.favorite_border,
+            color: viewModel.isFollowed ? Colors.red : Colors.white,
+          ),
+          onPressed: () async{
+            if(ref.read(authProvider).user == null){
+              context.go('/login');
+            }else{
+              ref.read(bookInteractionProvider.notifier).toggleFollowBook(book.id);
+            }
+          }
+        ),
+        // Nút Đánh dấu (Bookmark)
+        IconButton(
+          icon: Icon(
+            viewModel.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+            color: viewModel.isBookmarked ? Colors.amber : Colors.white,
+          ),
+          onPressed: () async{
+            if(ref.read(authProvider).user == null){
+              context.go('/login');
+            }else{
+              ref.read(bookInteractionProvider.notifier).toggleBookmark(book.id);
+            }
+          }
+        ),
+        const SizedBox(width: 8),
+      ],
     );
   }
 
@@ -208,16 +253,69 @@ class _BookScreenState extends ConsumerState<BookScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildBottomBar(ThemeData theme) {
+  Widget _buildBottomBar(ThemeData theme, BookViewModel viewModel) {
+    final book = viewModel.book;
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-        onPressed: () {},
-        child: const Text("BẮT ĐẦU ĐỌC", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -2))
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: IconButton(
+              icon: Icon(
+                viewModel.isFollowed ? Icons.favorite : Icons.favorite_border,
+                color: viewModel.isFollowed ? Colors.red : Colors.white,
+              ),
+              onPressed: () async{
+                if(ref.read(authProvider).user == null){
+                  context.go('/login');
+                }else{
+                  ref.read(bookInteractionProvider.notifier).toggleFollowBook(book.id);
+                }
+              }
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: IconButton(
+              icon: Icon(
+                viewModel.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                color: viewModel.isBookmarked ? Colors.amber : theme.colorScheme.primary,
+              ),
+              onPressed: () async{
+                if(ref.read(authProvider).user == null){
+                  context.go('/login');
+                }else{
+                  ref.read(bookInteractionProvider.notifier).toggleBookmark(book.id);
+                }
+              }
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 56),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: () {},
+              child: const Text("BẮT ĐẦU ĐỌC", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ebook/features/book/domain/usecases/is_bookmarked_usecase.dart';
+import 'package:ebook/features/book/domain/usecases/is_followed_book_usecase.dart';
+import 'package:ebook/features/book/domain/usecases/toggle_follow_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/datasources/book_remote_data_source.dart';
 import '../../domain/repositories/book_repository.dart';
@@ -59,4 +62,19 @@ final getReadingHistoryUseCaseProvider = Provider((ref) {
 final toggleBookmarkUseCaseProvider = Provider((ref) {
   final repository = ref.watch(bookRepositoryProvider);
   return ToggleBookmarkUseCase(repository);
+});
+
+final toggleFollowBooksUseCaseProvider = Provider((ref){
+  final repository = ref.watch(bookRepositoryProvider);
+  return ToggleFollowUseCase(repository);
+});
+
+final isBookmarkUseCaseProvider = Provider((ref){
+  final repository = ref.watch(bookRepositoryProvider);
+  return IsBookmarkedUsecase(repository);
+});
+
+final isFollowBookUseCaseProvider = Provider((ref){
+  final repository = ref.watch(bookRepositoryProvider);
+  return IsFollowedBookUsecase(repository);
 });

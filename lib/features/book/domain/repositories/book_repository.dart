@@ -14,8 +14,8 @@ abstract class BookRepository {
 
   /// 3. Quản lý tương tác người dùng
   /// Toggle (bật/tắt) trạng thái đánh dấu hoặc theo dõi của người dùng đối với một cuốn sách
-  Future<Either<Failure, void>> toggleBookmark(String bookId, String userId);
-  Future<Either<Failure, void>> toggleFollow(String bookId, String userId);
+  Future<Either<Failure, void>> toggleBookmark(String bookId, String userId, DateTime createAt);
+  Future<Either<Failure, void>> toggleFollow(String bookId, String userId, DateTime createAt);
   /// Lấy thông tin mô tả chi tiết (nếu description quá dài cần load riêng)
   Future<Either<Failure, String>> getBookDescription(String bookId);
 
@@ -60,6 +60,18 @@ abstract class BookRepository {
     required String userId,
     required int pageSize,
     required int offset,
+  });
+
+  /// 8. Kiểm tra người dùng đã đánh dấu chưa
+  Future<Either<Failure, bool>> isBookmarked({
+    required String userId,
+    required String bookId,
+  });
+
+  /// 9. Kiểm tra người dùng đã theo dõi chưa
+  Future<Either<Failure, bool>> isFollowed({
+    required String userId,
+    required String bookId,
   });
 }
 

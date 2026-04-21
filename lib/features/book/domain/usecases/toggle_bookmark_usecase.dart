@@ -6,10 +6,12 @@ import '../repositories/book_repository.dart';
 class ToggleBookmarkParams {
   final String bookId;
   final String userId;
+  final DateTime createdAt;
 
   ToggleBookmarkParams({
     required this.bookId,
     required this.userId,
+    required this.createdAt
   });
 }
 
@@ -23,6 +25,7 @@ class ToggleBookmarkUseCase {
     return await repository.toggleBookmark(
       params.bookId,
       params.userId,
+      params.createdAt,
     );
   }
 }

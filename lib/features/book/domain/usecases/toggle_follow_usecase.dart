@@ -6,10 +6,12 @@ import '../repositories/book_repository.dart';
 class ToggleFollowParams {
   final String bookId;
   final String userId;
+  final DateTime createAt;
 
   ToggleFollowParams({
     required this.bookId,
     required this.userId,
+    required this.createAt
   });
 }
 
@@ -23,6 +25,7 @@ class ToggleFollowUseCase {
     return await repository.toggleFollow(
       params.bookId,
       params.userId,
+      params.createAt
     );
   }
 }

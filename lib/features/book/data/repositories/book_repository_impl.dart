@@ -61,9 +61,9 @@ class BookRepositoryImpl implements BookRepository {
   }
 
   @override
-  Future<Either<Failure, void>> toggleBookmark(String bookId, String userId) async {
+  Future<Either<Failure, void>> toggleBookmark(String bookId, String userId, DateTime createAt) async {
     try {
-      await remoteDataSource.toggleBookmark(bookId, userId);
+      await remoteDataSource.toggleBookmark(bookId, userId, createAt);
       return const Right(null);
     } on ServerException {
       return Left(ServerFailure());
@@ -71,14 +71,15 @@ class BookRepositoryImpl implements BookRepository {
   }
 
   @override
-  Future<Either<Failure, void>> toggleFollow(String bookId, String userId) async {
+  Future<Either<Failure, void>> toggleFollow(String bookId, String userId, DateTime createAt) async {
     try {
-      await remoteDataSource.toggleFollow(bookId, userId);
+      await remoteDataSource.toggleFollow(bookId, userId, createAt);
       return const Right(null);
-    } on ServerException {
-      return Left(ServerFailure());
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
     }
   }
+
 
   // --- NHÓM NỘI DUNG & CỘNG ĐỒNG ---
 
@@ -168,6 +169,31 @@ class BookRepositoryImpl implements BookRepository {
   }) async {
     try {
       final result = await remoteDataSource.getReadingHistory(userId, pageSize, offset);
+      return Right(result);
+    } on ServerException {
+      return Left(ServerFailure());
+    }
+  }
+
+  Future<Either<Failure, bool>> isBookmarked({
+    required String userId,
+    required String bookId,
+  }) async {
+    try {
+      final result = await remoteDataSource.isBookmarked(userId, bookId);
+      return Right(result);
+    } on ServerException {
+      return Left(ServerFailure());
+    }
+  }
+
+  /// 9. Kiểm tra người dùng đã theo dõi chưa
+  Future<Either<Failure, bool>> isFollowed({
+    required String userId,
+    required String bookId,
+  }) async {
+    try {
+      final result = await remoteDataSource.isFollowed(userId, bookId);
       return Right(result);
     } on ServerException {
       return Left(ServerFailure());
