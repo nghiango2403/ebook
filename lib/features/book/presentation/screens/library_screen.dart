@@ -10,6 +10,7 @@ class LibraryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final libraryState = ref.watch(libraryProvider);
+    final readLibraryState = ref.read(libraryProvider.notifier);
 
     return DefaultTabController(
       length: 3,
@@ -27,9 +28,15 @@ class LibraryScreen extends ConsumerWidget {
         body: libraryState.when(
           data: (data) => TabBarView(
             children: [
-              _buildBookList(data['bookmarked'] ?? []),
-              _buildBookList(data['followed'] ?? []),
-              _buildBookList(data['history'] ?? []),
+              _buildBookList(data.bookmarked.books, (bookId) {
+                readLibraryState.removeBookFromBookmarked(bookId);
+              }),
+              _buildBookList(data.followed.books, (bookId) {
+                readLibraryState.removeBookFromFollowed(bookId);
+              }),
+              _buildBookList(data.history.books, (bookId) {
+                // Logic xóa lịch sử nếu cần
+              }),
             ],
           ),
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -39,16 +46,23 @@ class LibraryScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBookList(List<BookEntity> books) {
+  Widget _buildBookList(List<BookEntity> books, Function(String) onAction) {
     if (books.isEmpty) {
       return const Center(child: Text('Danh sách này đang trống'));
     }
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: books.length,
-      itemBuilder: (context, index) {
-        return BookCardVertical(book: books[index]);
-      },
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 70),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: books.length,
+        itemBuilder: (context, index) {
+          final book = books[index];
+          return BookCardVertical(
+            book: book,
+            onTap: () => onAction(book.id),
+          );
+        },
+      ),
     );
   }
 }

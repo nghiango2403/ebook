@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../entities/book_entity.dart';
@@ -46,13 +47,15 @@ abstract class BookRepository {
   Future<Either<Failure, List<BookEntity>>> getBookmarkedBooks({
     required String userId,
     required int pageSize,
-    required int offset,
+    DocumentSnapshot? lastDocument,
+    String searchValues=""
   });
   /// 6. Lấy danh sách sách đang theo dõi (Following)
   Future<Either<Failure, List<BookEntity>>> getFollowedBooks({
     required String userId,
     required int pageSize,
-    required int offset,
+    DocumentSnapshot? lastDocument,
+    String searchValues=""
   });
 
   /// 7. Lấy lịch sử đọc sách (Reading History)

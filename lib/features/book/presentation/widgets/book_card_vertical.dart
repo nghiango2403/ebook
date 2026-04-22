@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../domain/entities/book_entity.dart';
+import '../../domain/entities/book_status.dart';
 
 class BookCardVertical extends StatelessWidget {
   final BookEntity book;
@@ -18,7 +20,9 @@ class BookCardVertical extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: onTap,
+        onTap: (){
+          context.push('/book/${book.id}');
+        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -62,10 +66,16 @@ class BookCardVertical extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        if(book.status == BookStatus.ongoing)
+                          const Icon(Icons.update, color: Colors.green, size: 16),
+                        if(book.status == BookStatus.completed)
+                          const Icon(Icons.check_circle, color: Colors.orange, size: 16),
+                        if(book.status == BookStatus.onHold)
+                          const Icon(Icons.pause_circle_filled, color: Colors.red, size: 16),
+
                         const SizedBox(width: 4),
                         Text(
-                          '4.5',
+                          book.status.label,
                           style: TextStyle(color: Colors.grey[700], fontSize: 13),
                         ),
                         const SizedBox(width: 12),
@@ -80,12 +90,42 @@ class BookCardVertical extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
+              PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert),
-                onPressed: () {
-                  // Xử lý menu tùy chọn
+                onSelected: (value) {
+                  // Xử lý logic khi người dùng chọn
+                  switch (value) {
+                    case 'delete':
+                      onTap?.call();
+                      break;
+                    case 'download':
+                      onTap?.call();//TODO Làm logic tải xuống
+                      break;
+                  }
                 },
-              ),
+                itemBuilder: (BuildContext context) => [
+                  const PopupMenuItem<String>(
+                    value: 'download',
+                    child: Row(
+                      children: [
+                        Icon(Icons.download_rounded, color: Colors.blue),
+                        SizedBox(width: 12),
+                        Text('Tải truyện'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline, color: Colors.red),
+                        SizedBox(width: 12),
+                        Text('Xóa khỏi tủ truyện', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
+              )
             ],
           ),
         ),

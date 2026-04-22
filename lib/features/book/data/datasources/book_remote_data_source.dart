@@ -24,9 +24,9 @@ abstract class BookRemoteDataSource {
   Future<List<BookModel>> getBooksByAuthor(String authorName, String excludedBookId);
   Future<void> toggleBookmark(String bookId, String userId, DateTime createAt);
   Future<List<BookModel>> getReadingHistory(String userId, int pageSize, int offset);
-  Future<List<BookModel>> getFollowedBooks(String userId, int pageSize, int offset);
+  Future<List<BookModel>> getFollowedBooks(String userId, int pageSize, DocumentSnapshot? lastDocument, String searchValues);
   Future<void> toggleFollow(String bookId, String userId, DateTime createAt);
-  Future<List<BookModel>> getBookmarkedBooks(String userId, int pageSize, int offset);
+  Future<List<BookModel>> getBookmarkedBooks(String userId, int pageSize, DocumentSnapshot? lastDocument, String searchValues);
   Future<bool> isBookmarked(String userId, String bookId);
   Future<bool> isFollowed(String userId, String bookId);
 }
@@ -176,7 +176,7 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   }
 
   @override
-  Future<List<BookModel>> getBookmarkedBooks(String userId, int pageSize, int offset) async {
+  Future<List<BookModel>> getBookmarkedBooks(String userId, int pageSize, DocumentSnapshot? lastDocument, String searchValues) async {
     final snapshot = await firestore
         .collection('users')
         .doc(userId)
@@ -189,7 +189,7 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   }
 
   @override
-  Future<List<BookModel>> getFollowedBooks(String userId, int pageSize, int offset) async {
+  Future<List<BookModel>> getFollowedBooks(String userId, int pageSize, DocumentSnapshot? lastDocument, String searchValues) async {
     final snapshot = await firestore
         .collection('users')
         .doc(userId)

@@ -47,5 +47,6 @@ flutter {
 }
 dependencies {
     // Sử dụng BoM để quản lý phiên bản tự động cho Android native
-    implementation platform('com.google.firebase:firebase-bom:33.0.0')
+    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
+    implementation("com.google.firebase:firebase-analytics")
 }

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/errors/exceptions.dart';
@@ -137,10 +138,11 @@ class BookRepositoryImpl implements BookRepository {
   Future<Either<Failure, List<BookEntity>>> getBookmarkedBooks({
     required String userId,
     required int pageSize,
-    required int offset,
+    DocumentSnapshot? lastDocument,
+    String searchValues=""
   }) async {
     try {
-      final result = await remoteDataSource.getBookmarkedBooks(userId, pageSize, offset);
+      final result = await remoteDataSource.getBookmarkedBooks(userId, pageSize, lastDocument, searchValues);
       return Right(result);
     } on ServerException {
       return Left(ServerFailure());
@@ -151,10 +153,11 @@ class BookRepositoryImpl implements BookRepository {
   Future<Either<Failure, List<BookEntity>>> getFollowedBooks({
     required String userId,
     required int pageSize,
-    required int offset,
+    DocumentSnapshot? lastDocument,
+    String searchValues=""
   }) async {
     try {
-      final result = await remoteDataSource.getFollowedBooks(userId, pageSize, offset);
+      final result = await remoteDataSource.getFollowedBooks(userId, pageSize, lastDocument, searchValues);
       return Right(result);
     } on ServerException {
       return Left(ServerFailure());

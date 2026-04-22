@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../entities/book_entity.dart';
@@ -7,12 +8,14 @@ import '../repositories/book_repository.dart';
 class GetBookmarkedBooksParams {
   final String userId;
   final int pageSize;
-  final int offset;
+  final DocumentSnapshot? lastDocument;
+  final String searchValues;
 
   GetBookmarkedBooksParams({
     required this.userId,
-    this.pageSize = 20, // Mặc định lấy 20 cuốn mỗi lần
-    this.offset = 0,
+    this.pageSize = 10,
+    this.lastDocument,
+    this.searchValues = "",
   });
 }
 
@@ -26,7 +29,8 @@ class GetBookmarkedBooksUseCase {
     return await repository.getBookmarkedBooks(
       userId: params.userId,
       pageSize: params.pageSize,
-      offset: params.offset,
+      lastDocument: params.lastDocument,
+      searchValues: params.searchValues,
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/book/presentation/screens/book_screen.dart';
+import '../../features/book/presentation/screens/library_screen.dart';
 import '../common/screens/main_layout.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -24,7 +25,7 @@ final goRouter = GoRouter(
             GoRoute(
               path: '/',
               name: 'home',
-              builder: (context, state) => const Center(child: Text("TỦ TRUYỆN")),
+              builder: (context, state) => LibraryScreen(),
             ),
           ],
         ),
