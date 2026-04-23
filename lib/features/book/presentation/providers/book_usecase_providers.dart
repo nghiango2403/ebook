@@ -11,11 +11,17 @@ import '../../../chapter/domain/usecases/get_list_reading_history_usecase.dart';
 import '../../data/datasources/book_remote_data_source.dart';
 import '../../data/repositories/book_repository_impl.dart';
 import '../../domain/repositories/book_repository.dart';
+import '../../domain/usecases/add_book_usecase.dart';
 import '../../domain/usecases/get_book_by_id_usecase.dart';
 import '../../domain/usecases/get_bookmarked_books_usecase.dart';
 import '../../domain/usecases/get_followed_books_usecase.dart';
+import '../../domain/usecases/get_mybooks_usecase.dart';
+import '../../domain/usecases/hidden_book_usecase.dart';
 import '../../domain/usecases/search_books_usecase.dart';
 import '../../domain/usecases/toggle_bookmark_usecase.dart';
+import '../../domain/usecases/unhidden_book_usecase.dart';
+import '../../domain/usecases/update_book_status_usecase.dart';
+import '../../domain/usecases/update_book_usecase.dart';
 
 // 1. Tạo Provider cho Firestore instance
 final firestoreProvider = Provider<FirebaseFirestore>((ref) {
@@ -92,4 +98,34 @@ final isBookmarkUseCaseProvider = Provider((ref) {
 final isFollowBookUseCaseProvider = Provider((ref) {
   final repository = ref.watch(bookRepositoryProvider);
   return IsFollowedBookUsecase(repository);
+});
+
+final addBookUseCaseProvider = Provider((ref) {
+  final repository = ref.watch(bookRepositoryProvider);
+  return AddBookUseCase(repository);
+});
+
+final hiddenBookUseCaseProvider = Provider((ref) {
+  final repository = ref.watch(bookRepositoryProvider);
+  return HiddenBookUseCase(repository);
+});
+
+final unHiddenBookUseCaseProvider = Provider((ref) {
+  final repository = ref.watch(bookRepositoryProvider);
+  return UnHiddenBookUseCase(repository);
+});
+
+final getMyBooksUseCaseProvider = Provider((ref) {
+  final repository = ref.watch(bookRepositoryProvider);
+  return GetMyBooksUseCase(repository);
+});
+
+final updateBookUseCaseProvider = Provider((ref) {
+  final repository = ref.watch(bookRepositoryProvider);
+  return UpdateBookUseCase(repository);
+});
+
+final updateBookStatusUseCaseProvider = Provider((ref) {
+  final repository = ref.watch(bookRepositoryProvider);
+  return UpdateBookStatusUseCase(repository);
 });

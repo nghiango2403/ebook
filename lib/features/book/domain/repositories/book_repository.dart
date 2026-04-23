@@ -82,6 +82,31 @@ abstract class BookRepository {
     required String userId,
     required String bookId,
   });
+
+  /// 10. Thêm sách
+  Future<Either<Failure, bool>> addBook(String bookId);
+
+  /// 11. Xóa sách
+  Future<Either<Failure, bool>> hiddenBook(String bookId);
+
+  /// 12. Sửa sách
+  Future<Either<Failure, bool>> updateBook(BookEntity book);
+
+  /// 13. Cập nhật trạng thái (Hoàn thành, Còn tiếp...)
+  Future<Either<Failure, bool>> updateBookStatus(
+    String bookId,
+    BookStatus status,
+  );
+
+  /// 14. Lấy danh sách sách đã tải lên
+  Future<Either<Failure, List<BookEntity>>> getMyBooks(
+    String userId,
+    int pageSize,
+    DocumentSnapshot? lastDocument,
+  );
+
+  /// 15. Hiển thị sách đã ẩn
+  Future<Either<Failure, bool>> unHiddenBook(String bookId);
 }
 
 /// Định nghĩa các kiểu sắp xếp dữ liệu mở rộng theo các chỉ số mới

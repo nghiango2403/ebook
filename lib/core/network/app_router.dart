@@ -1,11 +1,14 @@
 import 'package:ebook/features/auth/presentation/screens/login_screen.dart';
 import 'package:ebook/features/auth/presentation/screens/register_screen.dart';
 import 'package:ebook/features/book/presentation/screens/home_screen.dart';
+import 'package:ebook/features/book/presentation/screens/my_books/add_book_screen.dart';
+import 'package:ebook/features/book/presentation/screens/my_books/my_books_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/book/presentation/screens/book_screen.dart';
 import '../../features/book/presentation/screens/library_screen.dart';
+import '../../features/user_profile/presentation/screens/user_profile_screen.dart';
 import '../common/screens/main_layout.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -43,7 +46,8 @@ final goRouter = GoRouter(
             GoRoute(
               path: '/ranking',
               name: 'ranking',
-              builder: (context, state) => const Center(child: Text("XẾP HẠNG")),
+              builder: (context, state) =>
+                  const Center(child: Text("XẾP HẠNG")),
             ),
           ],
         ),
@@ -52,7 +56,21 @@ final goRouter = GoRouter(
             GoRoute(
               path: '/profile',
               name: 'profile',
-              builder: (context, state) => const Center(child: Text("Tài khoản")),
+              builder: (context, state) => UserProfileScreen(),
+              routes: [
+                GoRoute(
+                  path: '/mybooks',
+                  name: 'mybooks',
+                  builder: (context, state) => MyBooksScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'addbook',
+                      name: 'addbook',
+                      builder: (context, state) => AddBookScreen(),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
@@ -63,16 +81,17 @@ final goRouter = GoRouter(
       builder: (context, state) {
         final id = state.pathParameters['bookId']!;
         return BookScreen(bookId: id);
-      },),
+      },
+    ),
     GoRoute(
       path: '/login',
       name: 'login',
-      builder: (context, state) => LoginScreen()
+      builder: (context, state) => LoginScreen(),
     ),
     GoRoute(
       path: '/register',
       name: 'register',
-      builder: (context, state) => RegisterScreen()
+      builder: (context, state) => RegisterScreen(),
     ),
   ],
   redirect: (context, state) {

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import 'book_status.dart';
 
 class BookEntity extends Equatable {
@@ -18,6 +19,7 @@ class BookEntity extends Equatable {
   final int viewsWeek;
   final int totalBookmarks;
   final int totalFollows;
+  final bool isHidden;
 
   const BookEntity({
     required this.id,
@@ -35,13 +37,28 @@ class BookEntity extends Equatable {
     required this.viewsDay,
     required this.viewsWeek,
     required this.totalBookmarks,
-    required this.totalFollows
+    required this.totalFollows,
+    this.isHidden = false,
   });
 
   @override
   List<Object?> get props => [
-    id, title, description, authorId, authorName, imageUrl,
-    categoryId, views, quantity, status, createdAt, updatedAt,
-    viewsDay, viewsWeek, totalBookmarks, totalFollows
+    id,
+    title,
+    description,
+    authorId,
+    authorName,
+    imageUrl,
+    categoryId,
+    views,
+    quantity,
+    status,
+    createdAt,
+    updatedAt,
+    viewsDay,
+    viewsWeek,
+    totalBookmarks,
+    totalFollows,
+    isHidden,
   ];
 }

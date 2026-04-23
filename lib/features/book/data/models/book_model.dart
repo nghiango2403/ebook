@@ -20,6 +20,7 @@ class BookModel extends BookEntity {
     required super.viewsWeek,
     required super.totalBookmarks,
     required super.totalFollows,
+    super.isHidden,
   });
 
   /// **Chuyển đổi từ Map (Firestore) sang Model**
@@ -42,6 +43,7 @@ class BookModel extends BookEntity {
       viewsWeek: (map['viewsWeek'] as num?)?.toInt() ?? 0,
       totalBookmarks: (map['totalBookmarks'] as num?)?.toInt() ?? 0,
       totalFollows: (map['totalFollows'] as num?)?.toInt() ?? 0,
+      isHidden: map['isHidden'] ?? false,
     );
   }
 
@@ -63,6 +65,7 @@ class BookModel extends BookEntity {
       'viewsWeek': viewsWeek,
       'totalBookmarks': totalBookmarks,
       'totalFollows': totalFollows,
+      'isHidden': isHidden,
     };
   }
 
@@ -85,6 +88,7 @@ class BookModel extends BookEntity {
       viewsWeek: entity.viewsWeek,
       totalBookmarks: entity.totalBookmarks,
       totalFollows: entity.totalFollows,
+      isHidden: entity.isHidden,
     );
   }
 }

@@ -55,6 +55,22 @@ abstract class BookRemoteDataSource {
   Future<bool> isBookmarked(String userId, String bookId);
 
   Future<bool> isFollowed(String userId, String bookId);
+
+  Future<void> addBook(String bookId);
+
+  Future<void> hiddenBook(String bookId);
+
+  Future<void> updateBook(BookModel book);
+
+  Future<void> updateBookStatus(String bookId, BookStatus status);
+
+  Future<List<BookModel>> getMyBooks(
+    String userId,
+    int pageSize,
+    DocumentSnapshot? lastDocument,
+  );
+
+  Future<void> unHiddenBook(String bookId);
 }
 
 class BookRemoteDataSourceImpl implements BookRemoteDataSource {
@@ -81,7 +97,8 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   }) async {
     Query query = firestore.collection('books');
 
-    if (category != null) query = query.where('category', isEqualTo: category);
+    if (category != null)
+      query = query.where('categoryId', isEqualTo: category);
     if (status != null) query = query.where('status', isEqualTo: status.label);
     if (minChapters != null)
       query = query.where('quantity', isGreaterThan: minChapters);
@@ -138,7 +155,7 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   ) async {
     final snapshot = await firestore
         .collection('books')
-        .where('author', isEqualTo: authorName)
+        .where('authorName', isEqualTo: authorName)
         .limit(10)
         .get();
 
@@ -181,7 +198,6 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
     });
   }
 
-  @override
   @override
   Future<void> toggleFollow(
     String bookId,
@@ -298,5 +314,70 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
         .doc(bookId)
         .get();
     return docSnapshot.exists;
+  }
+
+  @override
+  Future<void> addBook(String bookId) async {
+    await firestore.collection('books').doc(bookId).set({
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'isHidden': false,
+      'status': BookStatus.ongoing.label,
+      'views': 0,
+      'viewsDay': 0,
+      'viewsWeek': 0,
+      'totalBookmarks': 0,
+      'totalFollows': 0,
+      'quantity': 0,
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<List<BookModel>> getMyBooks(
+    String userId,
+    int pageSize,
+    DocumentSnapshot? lastDocument,
+  ) async {
+    final snapshot = await firestore
+        .collection('books')
+        .where('authorId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => BookModel.fromMap(doc.data(), doc.id))
+        .toList();
+  }
+
+  @override
+  Future<void> hiddenBook(String bookId) async {
+    await firestore.collection('books').doc(bookId).update({
+      'isHidden': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  @override
+  Future<void> unHiddenBook(String bookId) async {
+    await firestore.collection('books').doc(bookId).update({
+      'isHidden': false,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  @override
+  Future<void> updateBook(BookModel book) async {
+    final bookMap = book.toMap();
+    bookMap['updatedAt'] = FieldValue.serverTimestamp();
+
+    await firestore.collection('books').doc(book.id).update(bookMap);
+  }
+
+  @override
+  Future<void> updateBookStatus(String bookId, BookStatus status) async {
+    await firestore.collection('books').doc(bookId).update({
+      'status': status.label,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 }

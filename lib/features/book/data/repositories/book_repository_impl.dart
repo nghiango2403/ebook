@@ -1,13 +1,15 @@
+import 'dart:developer' as dev;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 
-import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/book_entity.dart';
 import '../../domain/entities/book_status.dart';
 import '../../domain/entities/comment_entity.dart';
 import '../../domain/repositories/book_repository.dart';
 import '../datasources/book_remote_data_source.dart';
+import '../models/book_model.dart';
 
 class BookRepositoryImpl implements BookRepository {
   final BookRemoteDataSource remoteDataSource;
@@ -21,7 +23,8 @@ class BookRepositoryImpl implements BookRepository {
     try {
       final result = await remoteDataSource.getBookById(id);
       return Right(result);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (getBookById): $e");
       return Left(ServerFailure(message: "Không thể lấy thông tin sách"));
     }
   }
@@ -31,7 +34,8 @@ class BookRepositoryImpl implements BookRepository {
     try {
       final result = await remoteDataSource.getBookDescription(bookId);
       return Right(result);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (getBookDescription): $e");
       return Left(ServerFailure());
     }
   }
@@ -47,7 +51,8 @@ class BookRepositoryImpl implements BookRepository {
         excludedBookId,
       );
       return Right(result);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (getBooksByAuthor): $e");
       return Left(ServerFailure());
     }
   }
@@ -63,7 +68,8 @@ class BookRepositoryImpl implements BookRepository {
     try {
       await remoteDataSource.toggleBookmark(bookId, userId, createAt);
       return const Right(null);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (toggleBookmark): $e");
       return Left(ServerFailure());
     }
   }
@@ -78,6 +84,7 @@ class BookRepositoryImpl implements BookRepository {
       await remoteDataSource.toggleFollow(bookId, userId, createAt);
       return const Right(null);
     } catch (e) {
+      dev.log("Firestore Error (toggleFollow): $e");
       return Left(ServerFailure(message: e.toString()));
     }
   }
@@ -91,7 +98,8 @@ class BookRepositoryImpl implements BookRepository {
     try {
       final result = await remoteDataSource.getComments(bookId);
       return Right(result);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (getComments): $e");
       return Left(ServerFailure());
     }
   }
@@ -121,7 +129,8 @@ class BookRepositoryImpl implements BookRepository {
         sortBy: sortBy,
       );
       return Right(result);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (searchBooks): $e");
       return Left(ServerFailure());
     }
   }
@@ -141,7 +150,8 @@ class BookRepositoryImpl implements BookRepository {
         searchValues,
       );
       return Right(result);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (getBookmarkedBooks): $e");
       return Left(ServerFailure());
     }
   }
@@ -161,7 +171,8 @@ class BookRepositoryImpl implements BookRepository {
         searchValues,
       );
       return Right(result);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (getFollowedBooks): $e");
       return Left(ServerFailure());
     }
   }
@@ -179,11 +190,13 @@ class BookRepositoryImpl implements BookRepository {
         offset,
       );
       return Right(result);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (getReadingHistory): $e");
       return Left(ServerFailure());
     }
   }
 
+  @override
   Future<Either<Failure, bool>> isBookmarked({
     required String userId,
     required String bookId,
@@ -191,12 +204,13 @@ class BookRepositoryImpl implements BookRepository {
     try {
       final result = await remoteDataSource.isBookmarked(userId, bookId);
       return Right(result);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (isBookmarked): $e");
       return Left(ServerFailure());
     }
   }
 
-  /// 9. Kiểm tra người dùng đã theo dõi chưa
+  @override
   Future<Either<Failure, bool>> isFollowed({
     required String userId,
     required String bookId,
@@ -204,8 +218,87 @@ class BookRepositoryImpl implements BookRepository {
     try {
       final result = await remoteDataSource.isFollowed(userId, bookId);
       return Right(result);
-    } on ServerException {
+    } catch (e) {
+      dev.log("Firestore Error (isFollowed): $e");
       return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> addBook(String bookId) async {
+    try {
+      await remoteDataSource.addBook(bookId);
+      return const Right(true);
+    } catch (e) {
+      dev.log("Firestore Error (addBook): $e");
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<BookEntity>>> getMyBooks(
+    String userId,
+    int pageSize,
+    DocumentSnapshot? lastDocument,
+  ) async {
+    try {
+      final result = await remoteDataSource.getMyBooks(
+        userId,
+        pageSize,
+        lastDocument,
+      );
+      return Right(result);
+    } catch (e) {
+      dev.log("Firestore Error (getMyBooks): $e");
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> hiddenBook(String bookId) async {
+    try {
+      await remoteDataSource.hiddenBook(bookId);
+      return const Right(true);
+    } catch (e) {
+      dev.log("Firestore Error (hiddenBook): $e");
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> unHiddenBook(String bookId) async {
+    try {
+      await remoteDataSource.unHiddenBook(bookId);
+      return const Right(true);
+    } catch (e) {
+      dev.log("Firestore Error (unHiddenBook): $e");
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> updateBook(BookEntity book) async {
+    try {
+      final bookModel = BookModel.fromEntity(book);
+      await remoteDataSource.updateBook(bookModel);
+      return const Right(true);
+    } catch (e) {
+      dev.log("Firestore Error (updateBook): $e");
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> updateBookStatus(
+    String bookId,
+    BookStatus status,
+  ) async {
+    try {
+      await remoteDataSource.updateBookStatus(bookId, status);
+      return const Right(true);
+    } catch (e) {
+      dev.log("Firestore Error (updateBookStatus): $e");
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 }
