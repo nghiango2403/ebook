@@ -9,6 +9,9 @@ class ChapterModel extends ChapterEntity {
     required super.orderIndex,
     required super.content,
     required super.createdAt,
+    super.isVip=false,
+    super.price=0,
+    super.isPurchased=false
   });
 
   /// **Chuyển đổi từ Map (Firestore) sang Model**
@@ -21,6 +24,9 @@ class ChapterModel extends ChapterEntity {
       // Nếu map không có content (khi query mục lục), trả về chuỗi rỗng
       content: map['content'] ?? '',
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      isVip: map['isVip'] ?? false,
+      price: (map['price'] as num?)?.toInt() ?? 0,
+      isPurchased: false,
     );
   }
 
@@ -32,6 +38,8 @@ class ChapterModel extends ChapterEntity {
       'orderIndex': orderIndex,
       'content': content,
       'createdAt': Timestamp.fromDate(createdAt),
+      'isVip': isVip,
+      'price': price,
     };
   }
 }

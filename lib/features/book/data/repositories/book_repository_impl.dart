@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
-import '../../../../core/errors/failures.dart';
+
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/errors/failures.dart';
 import '../../domain/entities/book_entity.dart';
-import '../../domain/entities/chapter_entity.dart';
-import '../../domain/entities/comment_entity.dart';
 import '../../domain/entities/book_status.dart';
+import '../../domain/entities/comment_entity.dart';
 import '../../domain/repositories/book_repository.dart';
 import '../datasources/book_remote_data_source.dart';
 
@@ -42,7 +42,10 @@ class BookRepositoryImpl implements BookRepository {
     required String excludedBookId,
   }) async {
     try {
-      final result = await remoteDataSource.getBooksByAuthor(authorId, excludedBookId);
+      final result = await remoteDataSource.getBooksByAuthor(
+        authorId,
+        excludedBookId,
+      );
       return Right(result);
     } on ServerException {
       return Left(ServerFailure());
@@ -52,17 +55,11 @@ class BookRepositoryImpl implements BookRepository {
   // --- NHÓM TƯƠNG TÁC & CHỈ SỐ ---
 
   @override
-  Future<Either<Failure, void>> incrementViews(String id) async {
-    try {
-      await remoteDataSource.incrementViews(id);
-      return const Right(null);
-    } catch (e) {
-      return Left(ServerFailure(message: "Lỗi cập nhật lượt xem"));
-    }
-  }
-
-  @override
-  Future<Either<Failure, void>> toggleBookmark(String bookId, String userId, DateTime createAt) async {
+  Future<Either<Failure, void>> toggleBookmark(
+    String bookId,
+    String userId,
+    DateTime createAt,
+  ) async {
     try {
       await remoteDataSource.toggleBookmark(bookId, userId, createAt);
       return const Right(null);
@@ -72,7 +69,11 @@ class BookRepositoryImpl implements BookRepository {
   }
 
   @override
-  Future<Either<Failure, void>> toggleFollow(String bookId, String userId, DateTime createAt) async {
+  Future<Either<Failure, void>> toggleFollow(
+    String bookId,
+    String userId,
+    DateTime createAt,
+  ) async {
     try {
       await remoteDataSource.toggleFollow(bookId, userId, createAt);
       return const Right(null);
@@ -81,21 +82,12 @@ class BookRepositoryImpl implements BookRepository {
     }
   }
 
-
   // --- NHÓM NỘI DUNG & CỘNG ĐỒNG ---
 
   @override
-  Future<Either<Failure, List<ChapterEntity>>> getChapters(String bookId) async {
-    try {
-      final result = await remoteDataSource.getChapters(bookId);
-      return Right(result);
-    } on ServerException {
-      return Left(ServerFailure());
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<CommentEntity>>> getComments(String bookId) async {
+  Future<Either<Failure, List<CommentEntity>>> getComments(
+    String bookId,
+  ) async {
     try {
       final result = await remoteDataSource.getComments(bookId);
       return Right(result);
@@ -139,10 +131,15 @@ class BookRepositoryImpl implements BookRepository {
     required String userId,
     required int pageSize,
     DocumentSnapshot? lastDocument,
-    String searchValues=""
+    String searchValues = "",
   }) async {
     try {
-      final result = await remoteDataSource.getBookmarkedBooks(userId, pageSize, lastDocument, searchValues);
+      final result = await remoteDataSource.getBookmarkedBooks(
+        userId,
+        pageSize,
+        lastDocument,
+        searchValues,
+      );
       return Right(result);
     } on ServerException {
       return Left(ServerFailure());
@@ -154,10 +151,15 @@ class BookRepositoryImpl implements BookRepository {
     required String userId,
     required int pageSize,
     DocumentSnapshot? lastDocument,
-    String searchValues=""
+    String searchValues = "",
   }) async {
     try {
-      final result = await remoteDataSource.getFollowedBooks(userId, pageSize, lastDocument, searchValues);
+      final result = await remoteDataSource.getFollowedBooks(
+        userId,
+        pageSize,
+        lastDocument,
+        searchValues,
+      );
       return Right(result);
     } on ServerException {
       return Left(ServerFailure());
@@ -171,7 +173,11 @@ class BookRepositoryImpl implements BookRepository {
     required int offset,
   }) async {
     try {
-      final result = await remoteDataSource.getReadingHistory(userId, pageSize, offset);
+      final result = await remoteDataSource.getReadingHistory(
+        userId,
+        pageSize,
+        offset,
+      );
       return Right(result);
     } on ServerException {
       return Left(ServerFailure());

@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
+import 'package:ebook/features/chapter/domain/repositories/chapter_repository.dart';
 import '../../../../core/errors/failures.dart';
-import '../repositories/book_repository.dart';
 
 class IncrementViewsUseCase {
-  final BookRepository repository;
+  final ChapterRepository repository;
 
   IncrementViewsUseCase(this.repository);
 

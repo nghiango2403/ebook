@@ -1,13 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/book_model.dart';
-import '../models/chapter_model.dart';
-import '../models/comment_model.dart';
+
 import '../../domain/entities/book_status.dart';
 import '../../domain/repositories/book_repository.dart';
+import '../models/book_model.dart';
+import '../models/comment_model.dart';
 
 abstract class BookRemoteDataSource {
   Future<BookModel> getBookById(String id);
-  Future<void> incrementViews(String id);
+
   Future<List<BookModel>> searchBooks({
     required int pageSize,
     required int offset,
@@ -18,21 +18,48 @@ abstract class BookRemoteDataSource {
     BookStatus? status,
     required BookSortType sortBy,
   });
-  Future<List<ChapterModel>> getChapters(String bookId);
+
   Future<List<CommentModel>> getComments(String bookId);
+
   Future<String> getBookDescription(String bookId);
-  Future<List<BookModel>> getBooksByAuthor(String authorName, String excludedBookId);
+
+  Future<List<BookModel>> getBooksByAuthor(
+    String authorName,
+    String excludedBookId,
+  );
+
   Future<void> toggleBookmark(String bookId, String userId, DateTime createAt);
-  Future<List<BookModel>> getReadingHistory(String userId, int pageSize, int offset);
-  Future<List<BookModel>> getFollowedBooks(String userId, int pageSize, DocumentSnapshot? lastDocument, String searchValues);
+
+  Future<List<BookModel>> getReadingHistory(
+    String userId,
+    int pageSize,
+    int offset,
+  );
+
+  Future<List<BookModel>> getFollowedBooks(
+    String userId,
+    int pageSize,
+    DocumentSnapshot? lastDocument,
+    String searchValues,
+  );
+
   Future<void> toggleFollow(String bookId, String userId, DateTime createAt);
-  Future<List<BookModel>> getBookmarkedBooks(String userId, int pageSize, DocumentSnapshot? lastDocument, String searchValues);
+
+  Future<List<BookModel>> getBookmarkedBooks(
+    String userId,
+    int pageSize,
+    DocumentSnapshot? lastDocument,
+    String searchValues,
+  );
+
   Future<bool> isBookmarked(String userId, String bookId);
+
   Future<bool> isFollowed(String userId, String bookId);
 }
 
 class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   final FirebaseFirestore firestore;
+
   BookRemoteDataSourceImpl(this.firestore);
 
   @override
@@ -56,7 +83,8 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
 
     if (category != null) query = query.where('category', isEqualTo: category);
     if (status != null) query = query.where('status', isEqualTo: status.label);
-    if (minChapters != null) query = query.where('quantity', isGreaterThan: minChapters);
+    if (minChapters != null)
+      query = query.where('quantity', isGreaterThan: minChapters);
 
     switch (sortBy) {
       case BookSortType.newlyUploaded:
@@ -77,28 +105,11 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
 
     final snapshot = await query.limit(pageSize).get();
     return snapshot.docs
-        .map((doc) => BookModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+        .map(
+          (doc) =>
+              BookModel.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+        )
         .toList();
-  }
-
-  @override
-  Future<List<ChapterModel>> getChapters(String bookId) async {
-    final snapshot = await firestore
-        .collection('books')
-        .doc(bookId)
-        .collection('chapters')
-        .orderBy('orderIndex', descending: false)
-        .get();
-    return snapshot.docs.map((doc) => ChapterModel.fromMap(doc.data(), doc.id)).toList();
-  }
-
-  @override
-  Future<void> incrementViews(String id) async {
-    await firestore.collection('books').doc(id).update({
-      'views': FieldValue.increment(1),
-      'viewsDay': FieldValue.increment(1),
-      'viewsWeek': FieldValue.increment(1),
-    });
   }
 
   @override
@@ -109,7 +120,9 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
         .collection('comments')
         .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs.map((doc) => CommentModel.fromMap(doc.data(), doc.id)).toList();
+    return snapshot.docs
+        .map((doc) => CommentModel.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   @override
@@ -119,7 +132,10 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   }
 
   @override
-  Future<List<BookModel>> getBooksByAuthor(String authorName, String excludedBookId) async {
+  Future<List<BookModel>> getBooksByAuthor(
+    String authorName,
+    String excludedBookId,
+  ) async {
     final snapshot = await firestore
         .collection('books')
         .where('author', isEqualTo: authorName)
@@ -133,8 +149,16 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   }
 
   @override
-  Future<void> toggleBookmark(String bookId, String userId, DateTime createAt) async {
-    final docRef = firestore.collection('users').doc(userId).collection('bookmarks').doc(bookId);
+  Future<void> toggleBookmark(
+    String bookId,
+    String userId,
+    DateTime createAt,
+  ) async {
+    final docRef = firestore
+        .collection('users')
+        .doc(userId)
+        .collection('bookmarks')
+        .doc(bookId);
     final bookRef = firestore.collection('books').doc(bookId);
 
     return await firestore.runTransaction((transaction) async {
@@ -142,21 +166,33 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
 
       if (bookmarkDoc.exists) {
         transaction.delete(docRef);
-        transaction.update(bookRef, {'totalBookmarks': FieldValue.increment(-1)});
+        transaction.update(bookRef, {
+          'totalBookmarks': FieldValue.increment(-1),
+        });
       } else {
         transaction.set(docRef, {
           'bookId': bookId,
           'addedAt': Timestamp.fromDate(createAt),
         });
-        transaction.update(bookRef, {'totalBookmarks': FieldValue.increment(1)});
+        transaction.update(bookRef, {
+          'totalBookmarks': FieldValue.increment(1),
+        });
       }
     });
   }
 
   @override
   @override
-  Future<void> toggleFollow(String bookId, String userId, DateTime createAt) async {
-    final docRef = firestore.collection('users').doc(userId).collection('following').doc(bookId);
+  Future<void> toggleFollow(
+    String bookId,
+    String userId,
+    DateTime createAt,
+  ) async {
+    final docRef = firestore
+        .collection('users')
+        .doc(userId)
+        .collection('following')
+        .doc(bookId);
     final bookRef = firestore.collection('books').doc(bookId);
 
     return await firestore.runTransaction((transaction) async {
@@ -168,7 +204,7 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
       } else {
         transaction.set(docRef, {
           'bookId': bookId,
-          'followedAt': Timestamp.fromDate(createAt)
+          'followedAt': Timestamp.fromDate(createAt),
         });
         transaction.update(bookRef, {'totalFollows': FieldValue.increment(1)});
       }
@@ -176,7 +212,12 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   }
 
   @override
-  Future<List<BookModel>> getBookmarkedBooks(String userId, int pageSize, DocumentSnapshot? lastDocument, String searchValues) async {
+  Future<List<BookModel>> getBookmarkedBooks(
+    String userId,
+    int pageSize,
+    DocumentSnapshot? lastDocument,
+    String searchValues,
+  ) async {
     final snapshot = await firestore
         .collection('users')
         .doc(userId)
@@ -189,7 +230,12 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   }
 
   @override
-  Future<List<BookModel>> getFollowedBooks(String userId, int pageSize, DocumentSnapshot? lastDocument, String searchValues) async {
+  Future<List<BookModel>> getFollowedBooks(
+    String userId,
+    int pageSize,
+    DocumentSnapshot? lastDocument,
+    String searchValues,
+  ) async {
     final snapshot = await firestore
         .collection('users')
         .doc(userId)
@@ -202,7 +248,11 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
   }
 
   @override
-  Future<List<BookModel>> getReadingHistory(String userId, int pageSize, int offset) async {
+  Future<List<BookModel>> getReadingHistory(
+    String userId,
+    int pageSize,
+    int offset,
+  ) async {
     final snapshot = await firestore
         .collection('users')
         .doc(userId)
@@ -214,7 +264,9 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
     return _getBooksFromSubCollection(snapshot);
   }
 
-  Future<List<BookModel>> _getBooksFromSubCollection(QuerySnapshot snapshot) async {
+  Future<List<BookModel>> _getBooksFromSubCollection(
+    QuerySnapshot snapshot,
+  ) async {
     List<BookModel> books = [];
     for (var doc in snapshot.docs) {
       final bookId = doc.id;
