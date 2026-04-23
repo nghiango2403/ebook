@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../domain/entities/book_entity.dart';
+import '../../../domain/entities/book_status.dart';
 import '../../providers/book_provider.dart';
 
 class MyBooksScreen extends ConsumerStatefulWidget {
@@ -158,27 +159,97 @@ class _MyBooksScreenState extends ConsumerState<MyBooksScreen> {
       onSelected: (value) => _handleAction(value, book),
       itemBuilder: (context) => [
         const PopupMenuItem(value: 'edit', child: Text('Chỉnh sửa')),
-        PopupMenuItem(
-          value: book.isHidden ? 'unhide' : 'hide',
-          child: Text(book.isHidden ? 'Hiện sách' : 'Ẩn sách'),
-        ),
+        PopupMenuItem(value: 'hide', child: Text('Xóa sách')),
         const PopupMenuItem(value: 'status', child: Text('Đổi trạng thái')),
       ],
     );
   }
 
   void _handleAction(String action, BookEntity book) {
-    final notifier = ref.read(bookProvider.notifier);
     switch (action) {
       case 'hide':
-        notifier.hideBook(book.id);
-        break;
-      case 'unhide':
-        notifier.unHideBook(book.id);
+        _showDeleteConfirmDialog(book);
         break;
       case 'edit':
-        // Điều hướng sang màn hình update
+        context.push('/profile/mybooks/editbook/${book.id}');
+        break;
+      case 'status':
+        _showStatusDialog(book);
         break;
     }
+  }
+
+  void _showDeleteConfirmDialog(BookEntity book) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: Text('Bạn có chắc chắn muốn xóa "${book.title}" không?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(bookProvider.notifier).hideBook(book.id);
+              Navigator.pop(context);
+            },
+            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showStatusDialog(BookEntity book) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Cập nhật trạng thái',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: BookStatus.values.map((status) {
+              final isSelected = book.status == status;
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  isSelected ? Icons.check_circle : Icons.circle_outlined,
+                  color: isSelected
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey,
+                ),
+                title: Text(
+                  status.label,
+                  style: TextStyle(
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: isSelected
+                        ? Theme.of(context).primaryColor
+                        : Colors.black87,
+                  ),
+                ),
+                onTap: () {
+                  if (!isSelected) {
+                    ref
+                        .read(bookProvider.notifier)
+                        .updateBookStatus(book.id, status);
+                  }
+                  Navigator.pop(context);
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
   }
 }

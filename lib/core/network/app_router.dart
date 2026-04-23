@@ -2,6 +2,7 @@ import 'package:ebook/features/auth/presentation/screens/login_screen.dart';
 import 'package:ebook/features/auth/presentation/screens/register_screen.dart';
 import 'package:ebook/features/book/presentation/screens/home_screen.dart';
 import 'package:ebook/features/book/presentation/screens/my_books/add_book_screen.dart';
+import 'package:ebook/features/book/presentation/screens/my_books/edit_book_screen.dart';
 import 'package:ebook/features/book/presentation/screens/my_books/my_books_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -67,6 +68,14 @@ final goRouter = GoRouter(
                       path: 'addbook',
                       name: 'addbook',
                       builder: (context, state) => AddBookScreen(),
+                    ),
+                    GoRoute(
+                      path: 'editbook/:bookId',
+                      name: 'editbook',
+                      builder: (context, state) {
+                        final id = state.pathParameters['bookId']!;
+                        return EditBookScreen(bookId: id);
+                      },
                     ),
                   ],
                 ),

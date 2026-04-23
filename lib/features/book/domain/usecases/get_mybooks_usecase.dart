@@ -10,7 +10,7 @@ class GetMyBooksUseCase {
 
   GetMyBooksUseCase(this.repository);
 
-  Future<Either<Failure, List<BookEntity>>> call(
+  Future<Either<Failure, (List<BookEntity>, DocumentSnapshot?)>> call(
     String userId,
     int pageSize,
     DocumentSnapshot? lastDocument,

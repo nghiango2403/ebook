@@ -338,14 +338,24 @@ class BookRemoteDataSourceImpl implements BookRemoteDataSource {
     int pageSize,
     DocumentSnapshot? lastDocument,
   ) async {
-    final snapshot = await firestore
+    Query query = firestore
         .collection('books')
         .where('authorId', isEqualTo: userId)
+        .where('isHidden', isEqualTo: false)
         .orderBy('createdAt', descending: true)
-        .get();
+        .limit(pageSize);
+
+    if (lastDocument != null) {
+      query = query.startAfterDocument(lastDocument);
+    }
+
+    final snapshot = await query.get();
 
     return snapshot.docs
-        .map((doc) => BookModel.fromMap(doc.data(), doc.id))
+        .map(
+          (doc) =>
+              BookModel.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+        )
         .toList();
   }
 

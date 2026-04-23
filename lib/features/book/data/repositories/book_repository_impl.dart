@@ -236,18 +236,31 @@ class BookRepositoryImpl implements BookRepository {
   }
 
   @override
-  Future<Either<Failure, List<BookEntity>>> getMyBooks(
+  Future<Either<Failure, (List<BookEntity>, DocumentSnapshot?)>> getMyBooks(
     String userId,
     int pageSize,
     DocumentSnapshot? lastDocument,
   ) async {
     try {
-      final result = await remoteDataSource.getMyBooks(
-        userId,
-        pageSize,
-        lastDocument,
-      );
-      return Right(result);
+      Query query = FirebaseFirestore.instance
+          .collection('books')
+          .where('authorId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .limit(pageSize);
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+
+      final snapshot = await query.get();
+      final books = snapshot.docs
+          .map((doc) =>
+              BookModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+
+      final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+
+      return Right((books, lastDoc));
     } catch (e) {
       dev.log("Firestore Error (getMyBooks): $e");
       return Left(ServerFailure(message: e.toString()));

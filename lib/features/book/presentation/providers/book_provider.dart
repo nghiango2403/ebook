@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ebook/features/book/domain/usecases/get_book_by_id_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -19,6 +20,7 @@ class BookState {
   final String? error;
   final DocumentSnapshot? lastDocument;
   final bool hasReachedMax;
+  final BookEntity? selectedBook;
 
   BookState({
     this.isLoading = false,
@@ -26,6 +28,7 @@ class BookState {
     this.error,
     this.lastDocument,
     this.hasReachedMax = false,
+    this.selectedBook,
   });
 
   BookState copyWith({
@@ -34,6 +37,7 @@ class BookState {
     String? error,
     DocumentSnapshot? lastDocument,
     bool? hasReachedMax,
+    BookEntity? selectedBook,
   }) {
     return BookState(
       isLoading: isLoading ?? this.isLoading,
@@ -41,6 +45,7 @@ class BookState {
       error: error,
       lastDocument: lastDocument ?? this.lastDocument,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      selectedBook: selectedBook ?? this.selectedBook,
     );
   }
 }
@@ -52,6 +57,7 @@ class BookNotifier extends StateNotifier<BookState> {
   final HiddenBookUseCase _hiddenBookUseCase;
   final UnHiddenBookUseCase _unHiddenBookUseCase;
   final GetMyBooksUseCase _getMyBooksUseCase;
+  final GetBookByIdUseCase _getBookByIdUseCase;
   final UpdateBookUseCase _updateBookUseCase;
   final UpdateBookStatusUseCase _updateBookStatusUseCase;
 
@@ -63,16 +69,18 @@ class BookNotifier extends StateNotifier<BookState> {
     required HiddenBookUseCase hiddenBookUseCase,
     required UnHiddenBookUseCase unHiddenBookUseCase,
     required GetMyBooksUseCase getMyBooksUseCase,
+    required GetBookByIdUseCase getBookByIdUseCase,
     required UpdateBookUseCase updateBookUseCase,
     required UpdateBookStatusUseCase updateBookStatusUseCase,
-  })  : _ref = ref,
-        _addBookUseCase = addBookUseCase,
-        _hiddenBookUseCase = hiddenBookUseCase,
-        _unHiddenBookUseCase = unHiddenBookUseCase,
-        _getMyBooksUseCase = getMyBooksUseCase,
-        _updateBookUseCase = updateBookUseCase,
-        _updateBookStatusUseCase = updateBookStatusUseCase,
-        super(BookState());
+  }) : _ref = ref,
+       _addBookUseCase = addBookUseCase,
+       _hiddenBookUseCase = hiddenBookUseCase,
+       _unHiddenBookUseCase = unHiddenBookUseCase,
+       _getMyBooksUseCase = getMyBooksUseCase,
+       _getBookByIdUseCase = getBookByIdUseCase,
+       _updateBookUseCase = updateBookUseCase,
+       _updateBookStatusUseCase = updateBookStatusUseCase,
+       super(BookState());
 
   String? get _userId => _ref.read(authProvider).user?.uid;
 
@@ -91,16 +99,34 @@ class BookNotifier extends StateNotifier<BookState> {
     final result = await _getMyBooksUseCase(userId, _pageSize, lastDoc);
 
     result.fold(
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
-      (books) {
-        final List<BookEntity> currentBooks = isRefresh ? [] : List.from(state.myBooks);
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
+      (data) {
+        final books = data.$1;
+        final lastDoc = data.$2;
+
+        final List<BookEntity> currentBooks =
+            isRefresh ? [] : List.from(state.myBooks);
         currentBooks.addAll(books);
 
         state = state.copyWith(
           isLoading: false,
           myBooks: currentBooks,
+          lastDocument: lastDoc,
           hasReachedMax: books.length < _pageSize,
         );
+      },
+    );
+  }
+
+  Future<void> fetchMyBookById(String bookId) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await _getBookByIdUseCase(bookId);
+    result.fold(
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
+      (book) {
+        state = state.copyWith(isLoading: false, selectedBook: book);
       },
     );
   }
@@ -125,7 +151,10 @@ class BookNotifier extends StateNotifier<BookState> {
 
     // Tạo một id ngẫu nhiên cho book nếu cần, hoặc để Firestore tự tạo.
     // Ở đây AddBookUseCase hiện tại đang nhận String bookId, tôi sẽ sửa logic này hoặc tạo id trước.
-    final String bookId = FirebaseFirestore.instance.collection('books').doc().id;
+    final String bookId = FirebaseFirestore.instance
+        .collection('books')
+        .doc()
+        .id;
 
     final book = BookEntity(
       id: bookId,
@@ -147,16 +176,11 @@ class BookNotifier extends StateNotifier<BookState> {
       isHidden: false,
     );
 
-    // Lưu ý: AddBookUseCase hiện tại trong dự án của bạn đang nhận String bookId.
-    // Tuy nhiên để đúng yêu cầu CRUD, tôi sẽ giả định bạn muốn lưu cả object.
-    // Nếu AddBookUseCase chỉ nhận ID, ta cần cập nhật Repository/UseCase.
-    // Tạm thời tôi gọi _addBookUseCase(bookId) theo đúng signature cũ của bạn để không gây crash,
-    // nhưng lý tưởng nhất là updateBook(book) sau đó hoặc sửa AddBookUseCase.
-
     final result = await _addBookUseCase(bookId); // Theo code hiện tại của bạn
 
     result.fold(
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
       (_) async {
         // Sau khi tạo document với ID, cập nhật dữ liệu chi tiết
         await _updateBookUseCase(book);
@@ -171,7 +195,8 @@ class BookNotifier extends StateNotifier<BookState> {
     state = state.copyWith(isLoading: true, error: null);
     final result = await _hiddenBookUseCase(bookId);
     result.fold(
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
       (_) {
         state = state.copyWith(isLoading: false);
         fetchMyBooks(isRefresh: true);
@@ -184,7 +209,8 @@ class BookNotifier extends StateNotifier<BookState> {
     state = state.copyWith(isLoading: true, error: null);
     final result = await _unHiddenBookUseCase(bookId);
     result.fold(
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
       (_) {
         state = state.copyWith(isLoading: false);
         fetchMyBooks(isRefresh: true);
@@ -197,7 +223,8 @@ class BookNotifier extends StateNotifier<BookState> {
     state = state.copyWith(isLoading: true, error: null);
     final result = await _updateBookUseCase(book);
     result.fold(
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
       (_) {
         state = state.copyWith(isLoading: false);
         fetchMyBooks(isRefresh: true);
@@ -210,7 +237,8 @@ class BookNotifier extends StateNotifier<BookState> {
     state = state.copyWith(isLoading: true, error: null);
     final result = await _updateBookStatusUseCase(bookId, status);
     result.fold(
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
       (_) {
         state = state.copyWith(isLoading: false);
         fetchMyBooks(isRefresh: true);
@@ -227,6 +255,7 @@ final bookProvider = StateNotifierProvider<BookNotifier, BookState>((ref) {
     hiddenBookUseCase: ref.watch(hiddenBookUseCaseProvider),
     unHiddenBookUseCase: ref.watch(unHiddenBookUseCaseProvider),
     getMyBooksUseCase: ref.watch(getMyBooksUseCaseProvider),
+    getBookByIdUseCase: ref.watch(getBookByIdUseCaseProvider),
     updateBookUseCase: ref.watch(updateBookUseCaseProvider),
     updateBookStatusUseCase: ref.watch(updateBookStatusUseCaseProvider),
   );

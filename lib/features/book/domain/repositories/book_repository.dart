@@ -99,7 +99,7 @@ abstract class BookRepository {
   );
 
   /// 14. Lấy danh sách sách đã tải lên
-  Future<Either<Failure, List<BookEntity>>> getMyBooks(
+  Future<Either<Failure, (List<BookEntity>, DocumentSnapshot?)>> getMyBooks(
     String userId,
     int pageSize,
     DocumentSnapshot? lastDocument,
