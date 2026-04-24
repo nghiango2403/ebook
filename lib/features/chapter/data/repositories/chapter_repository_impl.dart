@@ -39,9 +39,19 @@ class ChapterRepositoryImpl implements ChapterRepository {
     String bookId,
     String title,
     String content,
+    int orderIndex,
+    bool isVip,
+    int price,
   ) async {
     try {
-      await remoteDataSource.addChapter(bookId, title, content);
+      await remoteDataSource.addChapter(
+        bookId,
+        title,
+        content,
+        orderIndex,
+        isVip,
+        price,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -67,9 +77,20 @@ class ChapterRepositoryImpl implements ChapterRepository {
     String chapterId,
     String title,
     String content,
+    int orderIndex,
+    bool isVip,
+    int price,
   ) async {
     try {
-      await remoteDataSource.updateChapter(bookId, chapterId, title, content);
+      await remoteDataSource.updateChapter(
+        bookId,
+        chapterId,
+        title,
+        content,
+        orderIndex,
+        isVip,
+        price,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -77,14 +98,14 @@ class ChapterRepositoryImpl implements ChapterRepository {
   }
 
   @override
-  Future<Either<Failure, void>> getChapter(
+  Future<Either<Failure, ChapterEntity>> getChapter(
     String bookId,
     String chapterId,
     String userId,
   ) async {
     try {
-      await remoteDataSource.getChapter(bookId, chapterId);
-      return const Right(null);
+      final result = await remoteDataSource.getChapter(bookId, chapterId);
+      return Right(result);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
@@ -123,26 +144,6 @@ class ChapterRepositoryImpl implements ChapterRepository {
         lastDocumentSnapshot,
       );
       return Right(result);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, void>> updateReadingHistory(
-    String bookId,
-    String chapterId,
-    String userId,
-    DateTime lastReadAt,
-  ) async {
-    try {
-      await remoteDataSource.updateReadingHistory(
-        bookId,
-        chapterId,
-        userId,
-        lastReadAt,
-      );
-      return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

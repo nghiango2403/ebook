@@ -17,6 +17,9 @@ abstract class ChapterRepository {
     String bookId,
     String title,
     String content,
+    int orderIndex,
+    bool isVip,
+    int price,
   );
 
   /// Xóa chương
@@ -28,10 +31,13 @@ abstract class ChapterRepository {
     String chapterId,
     String title,
     String content,
+    int orderIndex,
+    bool isVip,
+    int price,
   );
 
   /// Lấy nội dung chương
-  Future<Either<Failure, void>> getChapter(
+  Future<Either<Failure, ChapterEntity>> getChapter(
     String bookId,
     String chapterId,
     String userId,
@@ -50,14 +56,6 @@ abstract class ChapterRepository {
     String userId,
     int pageSize,
     DocumentSnapshot? lastDocumentSnapshot,
-  );
-
-  /// Cập nhật lịch sử đọc
-  Future<Either<Failure, void>> updateReadingHistory(
-    String bookId,
-    String chapterId,
-    String userId,
-    DateTime lastReadAt,
   );
 
   /// Xóa lịch sử đọc

@@ -12,9 +12,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ElevatedButton(
-        onPressed: () => context.push('/profile/mybooks'),
-        child: Text("My books"),
+      body: Column(
+        children: [
+          ElevatedButton(
+            onPressed: () => context.push('/profile/mybooks'),
+            child: Text("My books"),
+          ),
+          ElevatedButton(
+            onPressed: () => context.push('/login'),
+            child: Text("login"),
+          ),
+        ],
       ),
     );
   }

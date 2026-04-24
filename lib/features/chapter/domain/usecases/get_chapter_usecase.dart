@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../entities/chapter_entity.dart';
 import '../repositories/chapter_repository.dart';
 
 class GetChapterUseCase {
@@ -9,7 +10,7 @@ class GetChapterUseCase {
   GetChapterUseCase(this.repository);
 
   /// Lấy nội dung chương
-  Future<Either<Failure, void>> call(
+  Future<Either<Failure, ChapterEntity>> call(
     String bookId,
     String chapterId,
     String userId,

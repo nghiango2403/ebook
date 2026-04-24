@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -26,10 +27,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _onLogin() {
     if (_formKey.currentState!.validate()) {
-      ref.read(authProvider.notifier).login(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
+      ref
+          .read(authProvider.notifier)
+          .login(_emailController.text.trim(), _passwordController.text.trim());
     }
   }
 
@@ -75,9 +75,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Center(
                       child: Column(
                         children: [
-                          Icon(Icons.auto_stories_rounded,
-                              size: 80,
-                              color: theme.colorScheme.primary),
+                          Icon(
+                            Icons.auto_stories_rounded,
+                            size: 80,
+                            color: theme.colorScheme.primary,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             "Ebook Community",
@@ -119,7 +121,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      validator: (value) => value!.isEmpty ? "Vui lòng nhập email" : null,
+                      validator: (value) =>
+                          value!.isEmpty ? "Vui lòng nhập email" : null,
                     ),
                     const SizedBox(height: 20),
 
@@ -138,10 +141,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         hintText: "••••••••",
                         prefixIcon: const Icon(Icons.lock_outline_rounded),
                         suffixIcon: IconButton(
-                          icon: Icon(_isPasswordVisible
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined),
-                          onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                          onPressed: () => setState(
+                            () => _isPasswordVisible = !_isPasswordVisible,
+                          ),
                         ),
                         filled: true,
                         fillColor: theme.colorScheme.surface,
@@ -150,7 +157,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      validator: (value) => value!.length < 6 ? "Mật khẩu quá ngắn" : null,
+                      validator: (value) =>
+                          value!.length < 6 ? "Mật khẩu quá ngắn" : null,
                     ),
 
                     const SizedBox(height: 20),
@@ -159,7 +167,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       decoration: BoxDecoration(
                         boxShadow: [
                           BoxShadow(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.3,
+                            ),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -169,10 +179,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: authState.isLoading ? null : _onLogin,
                         child: authState.isLoading
                             ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
                             : const Text("Bắt đầu đọc ngay"),
                       ),
                     ),

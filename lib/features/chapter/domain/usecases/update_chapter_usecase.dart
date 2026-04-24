@@ -14,7 +14,18 @@ class UpdateChapterUseCase {
     String chapterId,
     String title,
     String content,
+    int orderIndex,
+    bool isVip,
+    int price,
   ) async {
-    return await repository.updateChapter(bookId, chapterId, title, content);
+    return await repository.updateChapter(
+      bookId,
+      chapterId,
+      title,
+      content,
+      orderIndex,
+      isVip,
+      price,
+    );
   }
 }

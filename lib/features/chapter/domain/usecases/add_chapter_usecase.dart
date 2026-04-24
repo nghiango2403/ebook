@@ -13,7 +13,17 @@ class AddChapterUseCase {
     String bookId,
     String title,
     String content,
+    int orderIndex,
+    bool isVip,
+    int price,
   ) async {
-    return await repository.addChapter(bookId, title, content);
+    return await repository.addChapter(
+      bookId,
+      title,
+      content,
+      orderIndex,
+      isVip,
+      price,
+    );
   }
 }

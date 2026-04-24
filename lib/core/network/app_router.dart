@@ -9,6 +9,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/book/presentation/screens/book_screen.dart';
 import '../../features/book/presentation/screens/library_screen.dart';
+import '../../features/chapter/presentation/screens/management/add_edit_chapter_screen.dart';
+import '../../features/chapter/presentation/screens/management/management_chapter_screen.dart';
+import '../../features/chapter/presentation/screens/reader/chapter_reader_screen.dart';
 import '../../features/user_profile/presentation/screens/user_profile_screen.dart';
 import '../common/screens/main_layout.dart';
 
@@ -77,6 +80,37 @@ final goRouter = GoRouter(
                         return EditBookScreen(bookId: id);
                       },
                     ),
+                    GoRoute(
+                      path: 'getlistchapter/:bookId',
+                      name: 'getlistchapter',
+                      builder: (context, state) {
+                        final id = state.pathParameters['bookId']!;
+                        return ManagementChapterScreen(bookId: id);
+                      },
+                      routes: [
+                        GoRoute(
+                          path: 'addchapter',
+                          name: 'addchapter',
+                          builder: (context, state) {
+                            final bookId = state.pathParameters['bookId']!;
+                            return AddEditChapterScreen(bookId: bookId);
+                          },
+                        ),
+                        GoRoute(
+                          path: 'editchapter/:chapterId',
+                          name: 'editchapter',
+                          builder: (context, state) {
+                            final bookId = state.pathParameters['bookId']!;
+                            final chapterId =
+                                state.pathParameters['chapterId']!;
+                            return AddEditChapterScreen(
+                              bookId: bookId,
+                              chapterId: chapterId,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ],
@@ -91,6 +125,16 @@ final goRouter = GoRouter(
         final id = state.pathParameters['bookId']!;
         return BookScreen(bookId: id);
       },
+      routes: [
+        GoRoute(
+          path: ':chapterId',
+          builder: (context, state) {
+            final bookId = state.pathParameters['bookId']!;
+            final chapterId = state.pathParameters['chapterId']!;
+            return ChapterReaderScreen(bookId: bookId, chapterId: chapterId);
+          },
+        ),
+      ],
     ),
     GoRoute(
       path: '/login',

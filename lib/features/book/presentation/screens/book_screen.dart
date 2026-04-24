@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../chapter/presentation/screens/reader/chapter_list_screen.dart';
 import '../model/book_view_model.dart';
 import '../providers/book_detail_provider.dart';
 
@@ -60,11 +61,19 @@ class _BookScreenState extends ConsumerState<BookScreen>
           children: [
             _buildIntroductionTab(viewModel, theme),
             const Center(child: Text("Tính năng bình luận đang phát triển")),
-            const Center(child: Text("Danh sách chương đang cập nhật")),
+            _buildChapterTab(viewModel),
           ],
         ),
       ),
       bottomNavigationBar: _buildBottomBar(theme, viewModel),
+    );
+  }
+
+  // Thêm phương thức build Tab Chương
+  Widget _buildChapterTab(BookViewModel viewModel) {
+    return ProviderScope(
+      overrides: [],
+      child: ChapterListScreen(bookId: viewModel.book.id),
     );
   }
 

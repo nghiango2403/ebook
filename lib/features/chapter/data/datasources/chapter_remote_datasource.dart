@@ -8,7 +8,14 @@ abstract class ChapterRemoteDataSource {
 
   Future<void> incrementViews(String id);
 
-  Future<void> addChapter(String bookId, String title, String content);
+  Future<void> addChapter(
+    String bookId,
+    String title,
+    String content,
+    int orderIndex,
+    bool isVip,
+    int price,
+  );
 
   Future<void> deleteChapter(String bookId, String chapterId);
 
@@ -17,6 +24,9 @@ abstract class ChapterRemoteDataSource {
     String chapterId,
     String title,
     String content,
+    int orderIndex,
+    bool isVip,
+    int price,
   );
 
   Future<ChapterModel> getChapter(String bookId, String chapterId);
@@ -32,13 +42,6 @@ abstract class ChapterRemoteDataSource {
     String userId,
     int pageSize,
     DocumentSnapshot? lastDocument,
-  );
-
-  Future<void> updateReadingHistory(
-    String bookId,
-    String chapterId,
-    String userId,
-    DateTime lastReadAt,
   );
 
   Future<void> deleteReadingHistory(
@@ -78,24 +81,25 @@ class ChapterRemoteDataSourceImpl implements ChapterRemoteDataSource {
   }
 
   @override
-  Future<void> addChapter(String bookId, String title, String content) async {
+  Future<void> addChapter(
+    String bookId,
+    String title,
+    String content,
+    int orderIndex,
+    bool isVip,
+    int price,
+  ) async {
     final chaptersRef = firestore
         .collection('books')
         .doc(bookId)
         .collection('chapters');
-    final snapshot = await chaptersRef
-        .orderBy('orderIndex', descending: true)
-        .limit(1)
-        .get();
-    int nextIndex = 1;
-    if (snapshot.docs.isNotEmpty) {
-      nextIndex = (snapshot.docs.first.data()['orderIndex'] as int) + 1;
-    }
 
     await chaptersRef.add({
       'title': title,
       'content': content,
-      'orderIndex': nextIndex,
+      'orderIndex': orderIndex,
+      'isVip': isVip,
+      'price': price,
       'createdAt': FieldValue.serverTimestamp(),
       'bookId': bookId,
     });
@@ -125,6 +129,9 @@ class ChapterRemoteDataSourceImpl implements ChapterRemoteDataSource {
     String chapterId,
     String title,
     String content,
+    int orderIndex,
+    bool isVip,
+    int price,
   ) async {
     await firestore
         .collection('books')
@@ -134,6 +141,9 @@ class ChapterRemoteDataSourceImpl implements ChapterRemoteDataSource {
         .update({
           'title': title,
           'content': content,
+          'orderIndex': orderIndex,
+          'isVip': isVip,
+          'price': price,
           'updatedAt': FieldValue.serverTimestamp(),
         });
   }
@@ -196,16 +206,6 @@ class ChapterRemoteDataSourceImpl implements ChapterRemoteDataSource {
     return snapshot.docs
         .map((doc) => ReadingHistoryModel.fromMap(doc.data()))
         .toList();
-  }
-
-  @override
-  Future<void> updateReadingHistory(
-    String bookId,
-    String chapterId,
-    String userId,
-    DateTime lastReadAt,
-  ) async {
-    await addReadingHistory(bookId, chapterId, userId, lastReadAt);
   }
 
   @override

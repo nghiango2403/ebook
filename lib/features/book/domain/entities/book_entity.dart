@@ -41,6 +41,44 @@ class BookEntity extends Equatable {
     this.isHidden = false,
   });
 
+  BookEntity copyWith({
+    String? title,
+    String? description,
+    String? authorId,
+    String? authorName,
+    String? imageUrl,
+    String? categoryId,
+    int? views,
+    int? quantity,
+    BookStatus? status,
+    DateTime? updatedAt,
+    int? viewsDay,
+    int? viewsWeek,
+    int? totalBookmarks,
+    int? totalFollows,
+    bool? isHidden,
+  }) {
+    return BookEntity(
+      id: id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      authorId: authorId ?? this.authorId,
+      authorName: authorName ?? this.authorName,
+      imageUrl: imageUrl ?? this.imageUrl,
+      categoryId: categoryId ?? this.categoryId,
+      views: views ?? this.views,
+      quantity: quantity ?? this.quantity,
+      status: status ?? this.status,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      viewsDay: viewsDay ?? this.viewsDay,
+      viewsWeek: viewsWeek ?? this.viewsWeek,
+      totalBookmarks: totalBookmarks ?? this.totalBookmarks,
+      totalFollows: totalFollows ?? this.totalFollows,
+      isHidden: isHidden ?? this.isHidden,
+    );
+  }
+
   @override
   List<Object?> get props => [
     id,

@@ -161,6 +161,7 @@ class _MyBooksScreenState extends ConsumerState<MyBooksScreen> {
         const PopupMenuItem(value: 'edit', child: Text('Chỉnh sửa')),
         PopupMenuItem(value: 'hide', child: Text('Xóa sách')),
         const PopupMenuItem(value: 'status', child: Text('Đổi trạng thái')),
+        const PopupMenuItem(value: 'chapter', child: Text('Quản lý chương')),
       ],
     );
   }
@@ -176,6 +177,8 @@ class _MyBooksScreenState extends ConsumerState<MyBooksScreen> {
       case 'status':
         _showStatusDialog(book);
         break;
+      case 'chapter':
+        context.push('/profile/mybooks/getlistchapter/${book.id}');
     }
   }
 
