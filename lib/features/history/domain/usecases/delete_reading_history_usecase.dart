@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
-import 'package:ebook/features/chapter/domain/repositories/chapter_repository.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../repositories/reading_history_repository.dart';
 
 class DeleteReadingHistoryUseCase {
-  final ChapterRepository repository;
+  final ReadingHistoryRepository repository;
 
   DeleteReadingHistoryUseCase(this.repository);
 

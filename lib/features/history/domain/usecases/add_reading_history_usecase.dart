@@ -1,24 +1,28 @@
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/failures.dart';
-import '../repositories/chapter_repository.dart';
+import '../repositories/reading_history_repository.dart';
 
 class AddReadingHistoryUseCase {
-  final ChapterRepository _chapterRepository;
+  final ReadingHistoryRepository _readingChapterRepository;
 
-  AddReadingHistoryUseCase(this._chapterRepository);
+  AddReadingHistoryUseCase(this._readingChapterRepository);
 
   /// Thêm lịch sử đọc
   Future<Either<Failure, void>> call(
     String bookId,
     String chapterId,
     String userId,
+    String chapterTitle,
+    int orderIndex,
     DateTime lastReadAt,
   ) async {
-    return await _chapterRepository.addReadingHistory(
+    return await _readingChapterRepository.addReadingHistory(
       bookId,
       chapterId,
       userId,
+      chapterTitle,
+      orderIndex,
       lastReadAt,
     );
   }

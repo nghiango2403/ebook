@@ -4,10 +4,6 @@ import 'package:ebook/features/book/domain/usecases/is_followed_book_usecase.dar
 import 'package:ebook/features/book/domain/usecases/toggle_follow_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../chapter/data/datasources/chapter_remote_datasource.dart';
-import '../../../chapter/data/repositories/chapter_repository_impl.dart';
-import '../../../chapter/domain/repositories/chapter_repository.dart';
-import '../../../chapter/domain/usecases/get_list_reading_history_usecase.dart';
 import '../../data/datasources/book_remote_data_source.dart';
 import '../../data/repositories/book_repository_impl.dart';
 import '../../domain/repositories/book_repository.dart';
@@ -32,18 +28,6 @@ final firestoreProvider = Provider<FirebaseFirestore>((ref) {
 final bookRemoteDataSourceProvider = Provider<BookRemoteDataSource>((ref) {
   final firestore = ref.watch(firestoreProvider);
   return BookRemoteDataSourceImpl(firestore);
-});
-
-final chapterRemoteDataSourceProvider = Provider<ChapterRemoteDataSource>((
-  ref,
-) {
-  final firestore = ref.watch(firestoreProvider);
-  return ChapterRemoteDataSourceImpl(firestore);
-});
-
-final chapterRepositoryProvider = Provider<ChapterRepository>((ref) {
-  final remoteDataSource = ref.watch(chapterRemoteDataSourceProvider);
-  return ChapterRepositoryImpl(remoteDataSource: remoteDataSource);
 });
 
 // 3. Tầng Repository
@@ -73,11 +57,6 @@ final getBookmarkedBooksUseCaseProvider = Provider((ref) {
 final getFollowedBooksUseCaseProvider = Provider((ref) {
   final repository = ref.watch(bookRepositoryProvider);
   return GetFollowedBooksUseCase(repository);
-});
-
-final getListReadingHistoryUseCaseProvider = Provider((ref) {
-  final repository = ref.watch(chapterRepositoryProvider);
-  return GetListReadingHistoryUseCase(repository);
 });
 
 final toggleBookmarkUseCaseProvider = Provider((ref) {
@@ -128,4 +107,9 @@ final updateBookUseCaseProvider = Provider((ref) {
 final updateBookStatusUseCaseProvider = Provider((ref) {
   final repository = ref.watch(bookRepositoryProvider);
   return UpdateBookStatusUseCase(repository);
+});
+
+final bookDetailProvider = FutureProvider.family((ref, String bookId) async {
+  final getBookByIdUseCase = ref.watch(getBookByIdUseCaseProvider);
+  return getBookByIdUseCase(bookId);
 });

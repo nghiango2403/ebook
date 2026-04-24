@@ -1,10 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:ebook/features/chapter/domain/repositories/chapter_repository.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/chapter_entity.dart';
-import '../../domain/entities/reading_history_entity.dart';
 import '../datasources/chapter_remote_datasource.dart';
 
 class ChapterRepositoryImpl implements ChapterRepository {
@@ -105,71 +103,6 @@ class ChapterRepositoryImpl implements ChapterRepository {
   ) async {
     try {
       final result = await remoteDataSource.getChapter(bookId, chapterId);
-      return Right(result);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, void>> addReadingHistory(
-    String bookId,
-    String chapterId,
-    String userId,
-    DateTime lastReadAt,
-  ) async {
-    try {
-      await remoteDataSource.addReadingHistory(
-        bookId,
-        chapterId,
-        userId,
-        lastReadAt,
-      );
-      return const Right(null);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<ReadingHistoryEntity>>> getListReadingHistory(
-    String userId,
-    int pageSize,
-    DocumentSnapshot? lastDocumentSnapshot,
-  ) async {
-    try {
-      final result = await remoteDataSource.getListReadingHistory(
-        userId,
-        pageSize,
-        lastDocumentSnapshot,
-      );
-      return Right(result);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, void>> deleteReadingHistory(
-    String bookId,
-    String chapterId,
-    String userId,
-  ) async {
-    try {
-      await remoteDataSource.deleteReadingHistory(bookId, chapterId, userId);
-      return const Right(null);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, ReadingHistoryEntity>> getReadingHistory(
-    String bookId,
-    String userId,
-  ) async {
-    try {
-      final result = await remoteDataSource.getReadingHistory(bookId, userId);
       return Right(result);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));

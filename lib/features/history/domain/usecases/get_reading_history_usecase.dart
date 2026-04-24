@@ -2,10 +2,10 @@ import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../entities/reading_history_entity.dart';
-import '../repositories/chapter_repository.dart';
+import '../repositories/reading_history_repository.dart';
 
 class GetReadingHistoryUseCase {
-  final ChapterRepository repository;
+  final ReadingHistoryRepository repository;
 
   GetReadingHistoryUseCase(this.repository);
 

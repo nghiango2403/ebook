@@ -5,22 +5,38 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../book/domain/usecases/get_book_by_id_usecase.dart';
 import '../../../book/domain/usecases/update_book_usecase.dart';
 import '../../../book/presentation/providers/book_usecase_providers.dart';
+import '../../../history/domain/entities/reading_history_entity.dart';
+import '../../../history/domain/usecases/add_reading_history_usecase.dart';
+import '../../../history/presentation/providers/reading_history_provider.dart';
+import '../../data/datasources/chapter_remote_datasource.dart';
+import '../../data/repositories/chapter_repository_impl.dart';
 import '../../domain/entities/chapter_entity.dart';
-import '../../domain/entities/reading_history_entity.dart';
+import '../../domain/repositories/chapter_repository.dart';
 import '../../domain/usecases/add_chapter_usecase.dart';
-import '../../domain/usecases/add_reading_history_usecase.dart';
 import '../../domain/usecases/delete_chapter_usecase.dart';
-import '../../domain/usecases/delete_reading_history_usecase.dart';
 import '../../domain/usecases/get_chapter_usecase.dart';
 import '../../domain/usecases/get_list_chapter_usecase.dart';
-import '../../domain/usecases/get_list_reading_history_usecase.dart';
-import '../../domain/usecases/get_reading_history_usecase.dart';
 import '../../domain/usecases/increment_views_usecase.dart';
 import '../../domain/usecases/update_chapter_usecase.dart';
 
 // =============================================================================
 // 1. Tầng DOMAIN (Providers cho các UseCases của Chapter)
 // =============================================================================
+final firestoreProvider = Provider<FirebaseFirestore>((ref) {
+  return FirebaseFirestore.instance;
+});
+
+final chapterRemoteDataSourceProvider = Provider<ChapterRemoteDataSource>((
+  ref,
+) {
+  final firestore = ref.watch(firestoreProvider);
+  return ChapterRemoteDataSourceImpl(firestore);
+});
+
+final chapterRepositoryProvider = Provider<ChapterRepository>((ref) {
+  final remoteDataSource = ref.watch(chapterRemoteDataSourceProvider);
+  return ChapterRepositoryImpl(remoteDataSource: remoteDataSource);
+});
 
 final getListChaptersUseCaseProvider = Provider((ref) {
   return GetListBooksChaptersUseCase(ref.watch(chapterRepositoryProvider));
@@ -47,19 +63,7 @@ final incrementChapterViewsUseCaseProvider = Provider((ref) {
 });
 
 final addReadingHistoryUseCaseProvider = Provider((ref) {
-  return AddReadingHistoryUseCase(ref.watch(chapterRepositoryProvider));
-});
-
-final getReadingHistoryUseCaseProvider = Provider((ref) {
-  return GetReadingHistoryUseCase(ref.watch(chapterRepositoryProvider));
-});
-
-final getListReadingHistoryUseCaseProvider = Provider((ref) {
-  return GetListReadingHistoryUseCase(ref.watch(chapterRepositoryProvider));
-});
-
-final deleteReadingHistoryUseCaseProvider = Provider((ref) {
-  return DeleteReadingHistoryUseCase(ref.watch(chapterRepositoryProvider));
+  return AddReadingHistoryUseCase(ref.watch(readingHistoryRepositoryProvider));
 });
 
 // =============================================================================
@@ -124,11 +128,9 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
     required GetChapterUseCase getChapterUseCase,
     required IncrementViewsUseCase incrementViewsUseCase,
     required AddReadingHistoryUseCase addReadingHistoryUseCase,
-    required GetReadingHistoryUseCase getReadingHistoryUseCase,
     required AddChapterUseCase addChapterUseCase,
     required UpdateChapterUseCase updateChapterUseCase,
     required DeleteChapterUseCase deleteChapterUseCase,
-    required DeleteReadingHistoryUseCase deleteReadingHistoryUseCase,
     required GetBookByIdUseCase getBookByIdUseCase,
     required UpdateBookUseCase updateBookUseCase,
   }) : _ref = ref,
@@ -144,7 +146,7 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
        super(ChapterState());
 
   Future<void> fetchChapters(String bookId, {bool isRefresh = false}) async {
-    if (state.isLoading || (state.hasReachedMax && !isRefresh)) return;
+    if (!mounted || state.isLoading || (state.hasReachedMax && !isRefresh)) return;
     state = state.copyWith(
       isLoading: true,
       error: null,
@@ -152,6 +154,7 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
       hasReachedMax: isRefresh ? false : state.hasReachedMax,
     );
     final result = await _getListChaptersUseCase.call(bookId);
+    if (!mounted) return;
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
@@ -169,9 +172,11 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
   }
 
   Future<void> loadChapterDetail(String bookId, String chapterId) async {
+    if (!mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     final user = _ref.read(authProvider).user;
     if (user == null) {
+      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
         error: 'Vui lòng đăng nhập để tiếp tục đọc.',
@@ -180,6 +185,7 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
     }
     await _incrementViewsUseCase.call(bookId);
     final result = await _getChapterUseCase.call(bookId, chapterId, user.uid);
+    if (!mounted) return;
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
@@ -188,8 +194,15 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
           bookId,
           chapterId,
           user.uid,
+          chapter.title,
+          chapter.orderIndex,
           DateTime.now(),
         );
+
+        if (!mounted) return;
+
+        // Làm mới danh sách lịch sử ở LibraryScreen
+        _ref.invalidate(readingHistoryProvider);
 
         state = state.copyWith(isLoading: false, currentChapter: chapter);
       },
@@ -204,6 +217,7 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
     bool isVip,
     int price,
   ) async {
+    if (!mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     final result = await _addChapterUseCase.call(
       bookId,
@@ -213,16 +227,19 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
       isVip,
       price,
     );
+    if (!mounted) return;
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
       (_) async {
         final bookResult = await _getBookByIdUseCase.call(bookId);
+        if (!mounted) return;
         bookResult.fold((_) => null, (book) async {
           await _updateBookUseCase.call(
             book.copyWith(quantity: book.quantity + 1),
           );
         });
+        if (!mounted) return;
         state = state.copyWith(isLoading: false);
         fetchChapters(bookId, isRefresh: true);
       },
@@ -238,6 +255,7 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
     bool isVip,
     int price,
   ) async {
+    if (!mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     final result = await _updateChapterUseCase.call(
       bookId,
@@ -248,6 +266,7 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
       isVip,
       price,
     );
+    if (!mounted) return;
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
@@ -259,18 +278,22 @@ class ChapterNotifier extends StateNotifier<ChapterState> {
   }
 
   Future<void> deleteChapter(String bookId, String chapterId) async {
+    if (!mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     final result = await _deleteChapterUseCase.call(bookId, chapterId);
+    if (!mounted) return;
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
       (_) async {
         final bookResult = await _getBookByIdUseCase.call(bookId);
+        if (!mounted) return;
         bookResult.fold((_) => null, (book) async {
           await _updateBookUseCase.call(
             book.copyWith(quantity: book.quantity - 1),
           );
         });
+        if (!mounted) return;
         state = state.copyWith(isLoading: false);
         fetchChapters(bookId, isRefresh: true);
       },
@@ -288,11 +311,9 @@ final chapterProvider = StateNotifierProvider<ChapterNotifier, ChapterState>((
     getChapterUseCase: ref.watch(getChapterUseCaseProvider),
     incrementViewsUseCase: ref.watch(incrementChapterViewsUseCaseProvider),
     addReadingHistoryUseCase: ref.watch(addReadingHistoryUseCaseProvider),
-    getReadingHistoryUseCase: ref.watch(getReadingHistoryUseCaseProvider),
     addChapterUseCase: ref.watch(addChapterUseCaseProvider),
     updateChapterUseCase: ref.watch(updateChapterUseCaseProvider),
     deleteChapterUseCase: ref.watch(deleteChapterUseCaseProvider),
-    deleteReadingHistoryUseCase: ref.watch(deleteReadingHistoryUseCaseProvider),
     getBookByIdUseCase: ref.watch(getBookByIdUseCaseProvider),
     updateBookUseCase: ref.watch(updateBookUseCaseProvider),
   );
