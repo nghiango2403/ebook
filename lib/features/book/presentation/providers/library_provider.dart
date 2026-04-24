@@ -1,113 +1,239 @@
-import 'package:ebook/features/book/domain/entities/paginated_books.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/book_entity.dart';
 import '../../domain/usecases/get_bookmarked_books_usecase.dart';
 import '../../domain/usecases/get_followed_books_usecase.dart';
+import '../../domain/usecases/toggle_bookmark_usecase.dart';
+import '../../domain/usecases/toggle_follow_usecase.dart';
 import 'book_usecase_providers.dart';
 
 class LibraryState {
-  final BookListState bookmarked;
-  final BookListState followed;
-  final BookListState history;
+  final bool isLoading;
+  final bool isBookmarkedLoading;
+  final bool isFollowedLoading;
+  final List<BookEntity> bookmarked;
+  final List<BookEntity> followed;
+  final String? error;
+
+  final DocumentSnapshot? lastBookmarkedDoc;
+  final bool hasReachedMaxBookmarked;
+
+  final DocumentSnapshot? lastFollowedDoc;
+  final bool hasReachedMaxFollowed;
 
   LibraryState({
-    required this.bookmarked,
-    required this.followed,
-    required this.history,
+    this.isLoading = false,
+    this.isBookmarkedLoading = false,
+    this.isFollowedLoading = false,
+    this.bookmarked = const [],
+    this.followed = const [],
+    this.error,
+    this.lastBookmarkedDoc,
+    this.hasReachedMaxBookmarked = false,
+    this.lastFollowedDoc,
+    this.hasReachedMaxFollowed = false,
   });
 
   LibraryState copyWith({
-    BookListState? bookmarked,
-    BookListState? followed,
-    BookListState? history,
+    bool? isLoading,
+    bool? isBookmarkedLoading,
+    bool? isFollowedLoading,
+    List<BookEntity>? bookmarked,
+    List<BookEntity>? followed,
+    String? error,
+    DocumentSnapshot? lastBookmarkedDoc,
+    bool? hasReachedMaxBookmarked,
+    DocumentSnapshot? lastFollowedDoc,
+    bool? hasReachedMaxFollowed,
   }) {
     return LibraryState(
+      isLoading: isLoading ?? this.isLoading,
+      isBookmarkedLoading: isBookmarkedLoading ?? this.isBookmarkedLoading,
+      isFollowedLoading: isFollowedLoading ?? this.isFollowedLoading,
       bookmarked: bookmarked ?? this.bookmarked,
       followed: followed ?? this.followed,
-      history: history ?? this.history,
+      error: error,
+      lastBookmarkedDoc: lastBookmarkedDoc ?? this.lastBookmarkedDoc,
+      hasReachedMaxBookmarked:
+          hasReachedMaxBookmarked ?? this.hasReachedMaxBookmarked,
+      lastFollowedDoc: lastFollowedDoc ?? this.lastFollowedDoc,
+      hasReachedMaxFollowed:
+          hasReachedMaxFollowed ?? this.hasReachedMaxFollowed,
     );
   }
 }
 
-final libraryProvider = AsyncNotifierProvider<LibraryNotifier, LibraryState>(
-  () {
-    return LibraryNotifier();
-  },
-);
+class LibraryNotifier extends StateNotifier<LibraryState> {
+  final Ref _ref;
+  final GetBookmarkedBooksUseCase _getBookmarkedUseCase;
+  final GetFollowedBooksUseCase _getFollowedUseCase;
+  final ToggleBookmarkUseCase _toggleBookmarkUseCase;
+  final ToggleFollowUseCase _toggleFollowUseCase;
 
-class LibraryNotifier extends AsyncNotifier<LibraryState> {
-  @override
-  Future<LibraryState> build() async {
-    return LibraryState(
-      bookmarked: BookListState(books: await _fetchBookmarked()),
-      followed: BookListState(books: await _fetchFollowed()),
-      history: BookListState(books: await _fetchHistory()),
+  LibraryNotifier({
+    required Ref ref,
+    required GetBookmarkedBooksUseCase getBookmarkedUseCase,
+    required GetFollowedBooksUseCase getFollowedUseCase,
+    required ToggleBookmarkUseCase toggleBookmarkUseCase,
+    required ToggleFollowUseCase toggleFollowUseCase,
+  }) : _ref = ref,
+       _getBookmarkedUseCase = getBookmarkedUseCase,
+       _getFollowedUseCase = getFollowedUseCase,
+       _toggleBookmarkUseCase = toggleBookmarkUseCase,
+       _toggleFollowUseCase = toggleFollowUseCase,
+       super(LibraryState());
+
+  final int _pageSize = 5;
+
+  Future<void> initLibrary() async {
+    if (!mounted) return;
+    state = LibraryState(isLoading: true);
+    final userId = _ref.read(authProvider).user?.uid ?? "";
+
+    if (userId.isEmpty) {
+      if (!mounted) return;
+      state = state.copyWith(isLoading: false, error: "Vui lòng đăng nhập");
+      return;
+    }
+
+    await Future.wait([fetchMoreBookmarked(), fetchMoreFollowed()]);
+    if (!mounted) return;
+    state = state.copyWith(isLoading: false);
+  }
+
+  Future<void> fetchMoreBookmarked() async {
+    if (!mounted || state.isBookmarkedLoading || state.hasReachedMaxBookmarked) return;
+
+    final userId = _ref.read(authProvider).user?.uid ?? "";
+    if (userId.isEmpty) return;
+
+    state = state.copyWith(isBookmarkedLoading: true);
+
+    final result = await _getBookmarkedUseCase(
+      GetBookmarkedBooksParams(
+        userId: userId,
+        pageSize: _pageSize,
+        lastDocument: state.lastBookmarkedDoc,
+      ),
+    );
+
+    if (!mounted) return;
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        isBookmarkedLoading: false,
+        error: failure.message,
+      ),
+      (data) {
+        final books = data.$1;
+        final lastDoc = data.$2;
+        state = state.copyWith(
+          isBookmarkedLoading: false,
+          bookmarked: [...state.bookmarked, ...books],
+          lastBookmarkedDoc: lastDoc,
+          hasReachedMaxBookmarked: books.length < _pageSize,
+        );
+      },
     );
   }
 
-  Future<List<BookEntity>> _fetchBookmarked() async {
-    final useCase = ref.read(getBookmarkedBooksUseCaseProvider);
-    final userId = ref.read(authProvider).user?.uid ?? "";
-    if (userId.isEmpty) return [];
-    final result = await useCase(GetBookmarkedBooksParams(userId: userId));
-    return result.getOrElse(() => []);
-  }
+  Future<void> fetchMoreFollowed() async {
+    if (!mounted || state.isFollowedLoading || state.hasReachedMaxFollowed) return;
 
-  Future<List<BookEntity>> _fetchFollowed() async {
-    final useCase = ref.read(getFollowedBooksUseCaseProvider);
-    final userId = ref.read(authProvider).user?.uid ?? "";
-    if (userId.isEmpty) return [];
+    final userId = _ref.read(authProvider).user?.uid ?? "";
+    if (userId.isEmpty) return;
 
-    final result = await useCase(
-      GetFollowedBooksParams(userId: userId, pageSize: 20, searchValues: ""),
+    state = state.copyWith(isFollowedLoading: true);
+
+    final result = await _getFollowedUseCase(
+      GetFollowedBooksParams(
+        userId: userId,
+        pageSize: _pageSize,
+        lastDocument: state.lastFollowedDoc,
+      ),
     );
 
-    return result.fold((failure) => [], (books) => books);
+    if (!mounted) return;
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        isFollowedLoading: false,
+        error: failure.message,
+      ),
+      (data) {
+        final books = data.$1;
+        final lastDoc = data.$2;
+        state = state.copyWith(
+          isFollowedLoading: false,
+          followed: [...state.followed, ...books],
+          lastFollowedDoc: lastDoc,
+          hasReachedMaxFollowed: books.length < _pageSize,
+        );
+      },
+    );
   }
 
-  Future<List<BookEntity>> _fetchHistory() async {
-    final useCase = ref.read(getListReadingHistoryUseCaseProvider);
-    final getBookByIdUseCase = ref.read(getBookByIdUseCaseProvider);
-    final userId = ref.read(authProvider).user?.uid ?? "";
-    if (userId.isEmpty) return [];
+  Future<void> removeBookFromBookmarked(String bookId) async {
+    final userId = _ref.read(authProvider).user?.uid;
+    if (userId == null) return;
 
-    final result = await useCase.call(userId, 20, null);
+    final result = await _toggleBookmarkUseCase(
+      ToggleBookmarkParams(
+        bookId: bookId,
+        userId: userId,
+        createdAt: DateTime.now(),
+      ),
+    );
 
-    return result.fold((failure) => [], (historyItems) async {
-      List<BookEntity> books = [];
-      for (var item in historyItems) {
-        final bookResult = await getBookByIdUseCase(item.bookId);
-        bookResult.fold((_) => null, (book) => books.add(book));
-      }
-      return books;
+    if (!mounted) return;
+
+    result.fold((failure) => state = state.copyWith(error: failure.message), (
+      _,
+    ) {
+      state = state.copyWith(
+        bookmarked: state.bookmarked.where((b) => b.id != bookId).toList(),
+      );
     });
   }
 
-  void removeBookFromBookmarked(String bookId) {
-    if (!state.hasValue) return;
-    final currentState = state.value!;
-    final updatedBooks = currentState.bookmarked.books
-        .where((b) => b.id != bookId)
-        .toList();
-    state = AsyncData(
-      currentState.copyWith(
-        bookmarked: currentState.bookmarked.copyWith(books: updatedBooks),
-      ),
-    );
-  }
+  Future<void> removeBookFromFollowed(String bookId) async {
+    final userId = _ref.read(authProvider).user?.uid;
+    if (userId == null) return;
 
-  void removeBookFromFollowed(String bookId) {
-    if (!state.hasValue) return;
-    final currentState = state.value!;
-    final updatedBooks = currentState.followed.books
-        .where((b) => b.id != bookId)
-        .toList();
-    state = AsyncData(
-      currentState.copyWith(
-        followed: currentState.followed.copyWith(books: updatedBooks),
+    final result = await _toggleFollowUseCase(
+      ToggleFollowParams(
+        bookId: bookId,
+        userId: userId,
+        createAt: DateTime.now(),
       ),
     );
+
+    if (!mounted) return;
+
+    result.fold((failure) => state = state.copyWith(error: failure.message), (
+      _,
+    ) {
+      state = state.copyWith(
+        followed: state.followed.where((b) => b.id != bookId).toList(),
+      );
+    });
   }
 }
+
+final libraryProvider = StateNotifierProvider<LibraryNotifier, LibraryState>((
+  ref,
+) {
+  final notifier = LibraryNotifier(
+    ref: ref,
+    getBookmarkedUseCase: ref.watch(getBookmarkedBooksUseCaseProvider),
+    getFollowedUseCase: ref.watch(getFollowedBooksUseCaseProvider),
+    toggleBookmarkUseCase: ref.watch(toggleBookmarkUseCaseProvider),
+    toggleFollowUseCase: ref.watch(toggleFollowBooksUseCaseProvider),
+  );
+
+  notifier.initLibrary();
+
+  return notifier;
+});

@@ -64,6 +64,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   Future<void> fetchHomeData() async {
+    if (!mounted) return;
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -88,6 +89,8 @@ class HomeNotifier extends StateNotifier<HomeState> {
         )),
       ]);
 
+      if (!mounted) return;
+
       final recentlyUpdated = results[0].fold((f) => <BookViewModel>[], (b) => _mapBooksWithCategory(categories, b));
       final newlyUploaded = results[1].fold((f) => <BookViewModel>[], (b) => _mapBooksWithCategory(categories, b));
       final newlyCompleted = results[2].fold((f) => <BookViewModel>[], (b) => _mapBooksWithCategory(categories, b));
@@ -99,6 +102,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
         newlyCompleted: newlyCompleted,
       );
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

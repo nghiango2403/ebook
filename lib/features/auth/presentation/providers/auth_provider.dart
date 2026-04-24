@@ -96,6 +96,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
             .collection('users')
             .doc(firebaseUser.uid)
             .get();
+
+        if (!mounted) return;
+
         if (doc.exists) {
           final userData = doc.data()!;
           final user = UserEntity(

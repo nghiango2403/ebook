@@ -25,7 +25,7 @@ class GetFollowedBooksUseCase {
   GetFollowedBooksUseCase(this.repository);
 
   /// Lấy danh sách truyện mà người dùng đã nhấn "Theo dõi"
-  Future<Either<Failure, List<BookEntity>>> call(GetFollowedBooksParams params) async {
+  Future<Either<Failure, (List<BookEntity>, DocumentSnapshot?)>> call(GetFollowedBooksParams params) async {
     return await repository.getFollowedBooks(
       userId: params.userId,
       pageSize: params.pageSize,

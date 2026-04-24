@@ -136,44 +136,78 @@ class BookRepositoryImpl implements BookRepository {
   }
 
   @override
-  Future<Either<Failure, List<BookEntity>>> getBookmarkedBooks({
+  Future<Either<Failure, (List<BookEntity>, DocumentSnapshot?)>> getBookmarkedBooks({
     required String userId,
     required int pageSize,
     DocumentSnapshot? lastDocument,
     String searchValues = "",
   }) async {
     try {
-      final result = await remoteDataSource.getBookmarkedBooks(
-        userId,
-        pageSize,
-        lastDocument,
-        searchValues,
-      );
-      return Right(result);
+      Query query = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('bookmarks')
+          .orderBy('addedAt', descending: true)
+          .limit(pageSize);
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+
+      final snapshot = await query.get();
+      
+      List<BookEntity> books = [];
+      for (var doc in snapshot.docs) {
+        final bookId = doc.id;
+        final bookDoc = await FirebaseFirestore.instance.collection('books').doc(bookId).get();
+        if (bookDoc.exists) {
+          books.add(BookModel.fromMap(bookDoc.data()!, bookDoc.id));
+        }
+      }
+
+      final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+      return Right((books, lastDoc));
     } catch (e) {
       dev.log("Firestore Error (getBookmarkedBooks): $e");
-      return Left(ServerFailure());
+      return Left(ServerFailure(message: "Không thể lấy danh sách đánh dấu"));
     }
   }
 
   @override
-  Future<Either<Failure, List<BookEntity>>> getFollowedBooks({
+  Future<Either<Failure, (List<BookEntity>, DocumentSnapshot?)>> getFollowedBooks({
     required String userId,
     required int pageSize,
     DocumentSnapshot? lastDocument,
     String searchValues = "",
   }) async {
     try {
-      final result = await remoteDataSource.getFollowedBooks(
-        userId,
-        pageSize,
-        lastDocument,
-        searchValues,
-      );
-      return Right(result);
+      Query query = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('following')
+          .orderBy('followedAt', descending: true)
+          .limit(pageSize);
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+
+      final snapshot = await query.get();
+      
+      List<BookEntity> books = [];
+      for (var doc in snapshot.docs) {
+        final bookId = doc.id;
+        final bookDoc = await FirebaseFirestore.instance.collection('books').doc(bookId).get();
+        if (bookDoc.exists) {
+          books.add(BookModel.fromMap(bookDoc.data()!, bookDoc.id));
+        }
+      }
+
+      final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+      return Right((books, lastDoc));
     } catch (e) {
       dev.log("Firestore Error (getFollowedBooks): $e");
-      return Left(ServerFailure());
+      return Left(ServerFailure(message: "Không thể lấy danh sách theo dõi"));
     }
   }
 

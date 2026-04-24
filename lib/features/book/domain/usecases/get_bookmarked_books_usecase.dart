@@ -25,7 +25,7 @@ class GetBookmarkedBooksUseCase {
   GetBookmarkedBooksUseCase(this.repository);
 
   /// Lấy danh sách sách mà người dùng đã nhấn Bookmark
-  Future<Either<Failure, List<BookEntity>>> call(GetBookmarkedBooksParams params) async {
+  Future<Either<Failure, (List<BookEntity>, DocumentSnapshot?)>> call(GetBookmarkedBooksParams params) async {
     return await repository.getBookmarkedBooks(
       userId: params.userId,
       pageSize: params.pageSize,

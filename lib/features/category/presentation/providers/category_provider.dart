@@ -79,22 +79,27 @@ class CategoryNotifier extends StateNotifier<CategoryState> {
        super(CategoryState());
 
   Future<void> fetchAllCategories() async {
+    if (!mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     try {
       final categories = await _getAllCategoriesUseCase.execute();
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, categories: categories);
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   Future<void> fetchCategoryById(String categoryId) async {
-    if (categoryId.isEmpty) return;
+    if (categoryId.isEmpty || !mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     try {
       final category = await _getCategoryByIdUseCase.execute(categoryId);
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, selectedCategory: category);
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

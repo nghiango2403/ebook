@@ -19,6 +19,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isPasswordVisible = false;
 
   @override
+  void initState() {
+    _emailController.text = 'nghiango.080918@gmail.com';
+    _passwordController.text = '123456';
+    super.initState();
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();

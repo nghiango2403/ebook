@@ -62,14 +62,18 @@ class BookDetailNotifier extends StateNotifier<BookDetailState> {
        super(BookDetailState());
 
   Future<void> loadBookDetail(String bookId) async {
+    if (!mounted) return;
     state = state.copyWith(isLoading: true, error: null);
 
     final userId = _ref.read(authProvider).user?.uid;
 
     final bookResult = await _getBookByIdUseCase.call(bookId);
 
+    if (!mounted) return;
+
     await bookResult.fold(
       (failure) async {
+        if (!mounted) return;
         state = state.copyWith(isLoading: false, error: failure.message);
       },
       (bookEntity) async {
@@ -92,6 +96,8 @@ class BookDetailNotifier extends StateNotifier<BookDetailState> {
           isFollowed = res.getOrElse(() => false);
         }
 
+        if (!mounted) return;
+
         state = state.copyWith(
           isLoading: false,
           bookViewModel: BookViewModel(
@@ -108,6 +114,7 @@ class BookDetailNotifier extends StateNotifier<BookDetailState> {
   Future<void> toggleBookmark(String bookId) async {
     final userId = _ref.read(authProvider).user?.uid;
     if (userId == null) {
+      if (!mounted) return;
       state = state.copyWith(error: "Người dùng chưa đăng nhập");
       return;
     }
@@ -119,6 +126,8 @@ class BookDetailNotifier extends StateNotifier<BookDetailState> {
         createdAt: DateTime.now(),
       ),
     );
+
+    if (!mounted) return;
 
     result.fold((failure) => state = state.copyWith(error: failure.message), (
       _,
@@ -133,6 +142,7 @@ class BookDetailNotifier extends StateNotifier<BookDetailState> {
   Future<void> toggleFollowBook(String bookId) async {
     final userId = _ref.read(authProvider).user?.uid;
     if (userId == null) {
+      if (!mounted) return;
       state = state.copyWith(error: "Người dùng chưa đăng nhập");
       return;
     }
@@ -144,6 +154,8 @@ class BookDetailNotifier extends StateNotifier<BookDetailState> {
         createAt: DateTime.now(),
       ),
     );
+
+    if (!mounted) return;
 
     result.fold((failure) => state = state.copyWith(error: failure.message), (
       _,

@@ -49,7 +49,7 @@ abstract class BookRepository {
   });
 
   /// 5. Lấy danh sách sách đã đánh dấu (Bookmarks) của người dùng
-  Future<Either<Failure, List<BookEntity>>> getBookmarkedBooks({
+  Future<Either<Failure, (List<BookEntity>, DocumentSnapshot?)>> getBookmarkedBooks({
     required String userId,
     required int pageSize,
     DocumentSnapshot? lastDocument,
@@ -57,7 +57,7 @@ abstract class BookRepository {
   });
 
   /// 6. Lấy danh sách sách đang theo dõi (Following)
-  Future<Either<Failure, List<BookEntity>>> getFollowedBooks({
+  Future<Either<Failure, (List<BookEntity>, DocumentSnapshot?)>> getFollowedBooks({
     required String userId,
     required int pageSize,
     DocumentSnapshot? lastDocument,

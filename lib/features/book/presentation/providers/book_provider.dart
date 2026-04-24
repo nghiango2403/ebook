@@ -87,16 +87,19 @@ class BookNotifier extends StateNotifier<BookState> {
   Future<void> fetchMyBooks({bool isRefresh = false}) async {
     final userId = _userId;
     if (userId == null) {
+      if (!mounted) return;
       state = state.copyWith(error: "Người dùng chưa đăng nhập");
       return;
     }
 
-    if (state.isLoading || (state.hasReachedMax && !isRefresh)) return;
+    if (!mounted || state.isLoading || (state.hasReachedMax && !isRefresh)) return;
 
     state = state.copyWith(isLoading: true, error: null);
 
     final lastDoc = isRefresh ? null : state.lastDocument;
     final result = await _getMyBooksUseCase(userId, _pageSize, lastDoc);
+
+    if (!mounted) return;
 
     result.fold(
       (failure) =>
@@ -120,8 +123,10 @@ class BookNotifier extends StateNotifier<BookState> {
   }
 
   Future<void> fetchMyBookById(String bookId) async {
+    if (!mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     final result = await _getBookByIdUseCase(bookId);
+    if (!mounted) return;
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
@@ -145,7 +150,7 @@ class BookNotifier extends StateNotifier<BookState> {
     required String authorName,
   }) async {
     final userId = _userId;
-    if (userId == null) return;
+    if (userId == null || !mounted) return;
 
     state = state.copyWith(isLoading: true, error: null);
 
@@ -178,12 +183,15 @@ class BookNotifier extends StateNotifier<BookState> {
 
     final result = await _addBookUseCase(bookId); // Theo code hiện tại của bạn
 
+    if (!mounted) return;
+
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
       (_) async {
         // Sau khi tạo document với ID, cập nhật dữ liệu chi tiết
         await _updateBookUseCase(book);
+        if (!mounted) return;
         state = state.copyWith(isLoading: false);
         fetchMyBooks(isRefresh: true);
       },
@@ -191,9 +199,10 @@ class BookNotifier extends StateNotifier<BookState> {
   }
 
   Future<void> hideBook(String bookId) async {
-    if (_userId == null) return;
+    if (_userId == null || !mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     final result = await _hiddenBookUseCase(bookId);
+    if (!mounted) return;
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
@@ -205,9 +214,10 @@ class BookNotifier extends StateNotifier<BookState> {
   }
 
   Future<void> unHideBook(String bookId) async {
-    if (_userId == null) return;
+    if (_userId == null || !mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     final result = await _unHiddenBookUseCase(bookId);
+    if (!mounted) return;
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
@@ -219,9 +229,10 @@ class BookNotifier extends StateNotifier<BookState> {
   }
 
   Future<void> updateBook(BookEntity book) async {
-    if (_userId == null) return;
+    if (_userId == null || !mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     final result = await _updateBookUseCase(book);
+    if (!mounted) return;
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
@@ -233,9 +244,10 @@ class BookNotifier extends StateNotifier<BookState> {
   }
 
   Future<void> updateBookStatus(String bookId, BookStatus status) async {
-    if (_userId == null) return;
+    if (_userId == null || !mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     final result = await _updateBookStatusUseCase(bookId, status);
+    if (!mounted) return;
     result.fold(
       (failure) =>
           state = state.copyWith(isLoading: false, error: failure.message),
