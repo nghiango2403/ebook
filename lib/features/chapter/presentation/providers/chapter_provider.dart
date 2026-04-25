@@ -318,3 +318,44 @@ final chapterProvider = StateNotifierProvider<ChapterNotifier, ChapterState>((
     updateBookUseCase: ref.watch(updateBookUseCaseProvider),
   );
 });
+
+/// Provider cung cấp thông tin chương sẽ đọc tiếp theo (lịch sử hoặc chương 1)
+final bookReadingProgressProvider =
+    FutureProvider.family<({String? chapterId, bool isHistory}), String>((
+      ref,
+      bookId,
+    ) async {
+      final user = ref.watch(authProvider).user;
+      // Theo dõi toàn bộ lịch sử để cập nhật khi user đọc chương mới
+      ref.watch(readingHistoryProvider);
+
+      String? targetId;
+      bool isHistory = false;
+
+      if (user != null) {
+        final history = await ref
+            .read(readingHistoryProvider.notifier)
+            .getReadingHistory(bookId, user.uid);
+        if (history != null) {
+          targetId = history.chapterId;
+          isHistory = true;
+        }
+      }
+
+      if (targetId == null) {
+        final result = await ref
+            .read(getListChaptersUseCaseProvider)
+            .call(bookId);
+        targetId = result.fold(
+          (failure) => null,
+          (chapters) {
+            if (chapters.isEmpty) return null;
+            final sorted = [...chapters]
+              ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+            return sorted.first.id;
+          },
+        );
+      }
+
+      return (chapterId: targetId, isHistory: isHistory);
+    });

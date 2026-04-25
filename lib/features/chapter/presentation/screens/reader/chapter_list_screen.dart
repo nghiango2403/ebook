@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../history/presentation/providers/reading_history_provider.dart';
 import '../../../domain/entities/chapter_entity.dart';
 import '../../providers/chapter_provider.dart';
 
@@ -16,6 +17,7 @@ class ChapterListScreen extends ConsumerStatefulWidget {
 
 class _ChapterListScreenState extends ConsumerState<ChapterListScreen> {
   final ScrollController _scrollController = ScrollController();
+  bool _hasScrolledToHistory = false;
 
   @override
   void initState() {
@@ -33,6 +35,25 @@ class _ChapterListScreenState extends ConsumerState<ChapterListScreen> {
     }
   }
 
+  void _scrollToHistory(String? chapterId, List<ChapterEntity> chapters) {
+    if (_hasScrolledToHistory || chapterId == null || chapters.isEmpty) return;
+
+    final index = chapters.indexWhere((c) => c.id == chapterId);
+    if (index != -1) {
+      _hasScrolledToHistory = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          // Ước tính chiều cao mỗi item (Card + Separator) khoảng 90-100
+          _scrollController.animateTo(
+            index * 92.0,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -42,11 +63,26 @@ class _ChapterListScreenState extends ConsumerState<ChapterListScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(chapterProvider);
+    final historyState = ref.watch(readingHistoryProvider);
 
-    return Scaffold(backgroundColor: Colors.grey[50], body: _buildBody(state));
+    // Lấy chapterId đang đọc từ lịch sử
+    final currentChapterId = historyState.histories
+        .where((h) => h.bookId == widget.bookId)
+        .firstOrNull
+        ?.chapterId;
+
+    // Tự động cuộn đến chương đang đọc khi dữ liệu tải xong
+    if (state.chapters.isNotEmpty && currentChapterId != null) {
+      _scrollToHistory(currentChapterId, state.chapters);
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: _buildBody(state, currentChapterId),
+    );
   }
 
-  Widget _buildBody(ChapterState state) {
+  Widget _buildBody(ChapterState state, String? currentChapterId) {
     if (state.isLoading && state.chapters.isEmpty) {
       return const Center(child: CircularProgressIndicator.adaptive());
     }
@@ -91,31 +127,50 @@ class _ChapterListScreenState extends ConsumerState<ChapterListScreen> {
               ),
             );
           }
-          return _buildChapterItem(state.chapters[index]);
+          final chapter = state.chapters[index];
+          return _buildChapterItem(chapter, chapter.id == currentChapterId);
         },
       ),
     );
   }
 
-  Widget _buildChapterItem(ChapterEntity chapter) {
+  Widget _buildChapterItem(ChapterEntity chapter, bool isCurrent) {
+    final theme = Theme.of(context);
     return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: isCurrent ? 2 : 0.5,
+      shadowColor: isCurrent
+          ? theme.colorScheme.primary.withValues(alpha: 0.3)
+          : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: isCurrent
+            ? BorderSide(color: theme.colorScheme.primary, width: 1.5)
+            : BorderSide.none,
+      ),
+      color: isCurrent
+          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.1)
+          : Colors.white,
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: CircleAvatar(
-          backgroundColor: Colors.blue.shade50,
+          backgroundColor: isCurrent
+              ? theme.colorScheme.primary
+              : Colors.blue.shade50,
           child: Text(
             '${chapter.orderIndex}',
             style: TextStyle(
-              color: Colors.blue.shade800,
+              color: isCurrent ? Colors.white : Colors.blue.shade800,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
         title: Text(
           chapter.title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+          style: TextStyle(
+            fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
+            fontSize: 16,
+            color: isCurrent ? theme.colorScheme.primary : null,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -123,7 +178,10 @@ class _ChapterListScreenState extends ConsumerState<ChapterListScreen> {
           'Cập nhật: ${chapter.createdAt}',
           style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
         ),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        trailing: Icon(
+          Icons.chevron_right,
+          color: isCurrent ? theme.colorScheme.primary : Colors.grey,
+        ),
         onTap: () => context.push('/book/${chapter.bookId}/${chapter.id}'),
       ),
     );

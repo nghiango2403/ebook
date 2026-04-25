@@ -85,12 +85,15 @@ class ReadingHistoryState {
 
 class ReadingHistoryNotifier extends StateNotifier<ReadingHistoryState> {
   final GetListReadingHistoryUseCase _getListReadingHistoryUseCase;
+  final GetReadingHistoryUseCase _getReadingHistoryUseCase;
   final DeleteReadingHistoryUseCase _deleteReadingHistoryUseCase;
 
   ReadingHistoryNotifier({
     required GetListReadingHistoryUseCase getListReadingHistoryUseCase,
+    required GetReadingHistoryUseCase getReadingHistoryUseCase,
     required DeleteReadingHistoryUseCase deleteReadingHistoryUseCase,
   }) : _getListReadingHistoryUseCase = getListReadingHistoryUseCase,
+       _getReadingHistoryUseCase = getReadingHistoryUseCase,
        _deleteReadingHistoryUseCase = deleteReadingHistoryUseCase,
        super(ReadingHistoryState());
 
@@ -98,7 +101,8 @@ class ReadingHistoryNotifier extends StateNotifier<ReadingHistoryState> {
     String userId, {
     bool isRefresh = false,
   }) async {
-    if (!mounted || state.isLoading || (state.hasReachedMax && !isRefresh)) return;
+    if (!mounted || state.isLoading || (state.hasReachedMax && !isRefresh))
+      return;
 
     state = state.copyWith(
       isLoading: true,
@@ -152,6 +156,15 @@ class ReadingHistoryNotifier extends StateNotifier<ReadingHistoryState> {
       );
     });
   }
+
+  /// Lấy thông tin lịch sử đọc của một cuốn sách cụ thể
+  Future<ReadingHistoryEntity?> getReadingHistory(
+    String bookId,
+    String userId,
+  ) async {
+    final result = await _getReadingHistoryUseCase.call(bookId, userId);
+    return result.fold((failure) => null, (history) => history);
+  }
 }
 
 final readingHistoryProvider =
@@ -160,6 +173,7 @@ final readingHistoryProvider =
         getListReadingHistoryUseCase: ref.watch(
           getListReadingHistoryUseCaseProvider,
         ),
+        getReadingHistoryUseCase: ref.watch(getReadingHistoryUseCaseProvider),
         deleteReadingHistoryUseCase: ref.watch(
           deleteReadingHistoryUseCaseProvider,
         ),

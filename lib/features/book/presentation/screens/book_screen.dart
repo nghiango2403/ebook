@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../chapter/presentation/providers/chapter_provider.dart';
 import '../../../chapter/presentation/screens/reader/chapter_list_screen.dart';
 import '../model/book_view_model.dart';
 import '../providers/book_detail_provider.dart';
@@ -322,6 +323,8 @@ class _BookScreenState extends ConsumerState<BookScreen>
   Widget _buildBottomBar(ThemeData theme, BookViewModel viewModel) {
     final book = viewModel.book;
     final notifier = ref.read(bookDetailProvider(widget.bookId).notifier);
+    final progressAsync = ref.watch(bookReadingProgressProvider(widget.bookId));
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
       decoration: BoxDecoration(
@@ -348,7 +351,7 @@ class _BookScreenState extends ConsumerState<BookScreen>
               ),
               onPressed: () async {
                 if (ref.read(authProvider).user == null) {
-                  context.go('/login');
+                  context.push('/login');
                 } else {
                   notifier.toggleFollowBook(book.id);
                 }
@@ -370,7 +373,7 @@ class _BookScreenState extends ConsumerState<BookScreen>
               ),
               onPressed: () async {
                 if (ref.read(authProvider).user == null) {
-                  context.go('/login');
+                  context.push('/login');
                 } else {
                   notifier.toggleBookmark(book.id);
                 }
@@ -386,13 +389,43 @@ class _BookScreenState extends ConsumerState<BookScreen>
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              onPressed: () {},
-              child: const Text(
-                "BẮT ĐẦU ĐỌC",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
+              onPressed: progressAsync.when(
+                data: (progress) => progress.chapterId != null
+                    ? () {
+                        final user = ref.read(authProvider).user;
+                        if (user == null) {
+                          context.push('/login');
+                          return;
+                        }
+                        context.push('/book/${book.id}/${progress.chapterId}');
+                      }
+                    : () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Sách chưa có chương nào"),
+                          ),
+                        );
+                      },
+                loading: () => null,
+                error: (_, __) => null,
+              ),
+              child: progressAsync.when(
+                data: (progress) => Text(
+                  progress.isHistory ? "TIẾP TỤC ĐỌC" : "BẮT ĐẦU ĐỌC",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
                 ),
+                loading: () => const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+                error: (error, _) => const Text("LỖI TẢI"),
               ),
             ),
           ),
