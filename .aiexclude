@@ -1,0 +1,33 @@
+# 1. Thư mục build và file tự động sinh (Đã tối ưu cho Flutter)
+build/
+.dart_tool/
+ios/Pods/
+assets/
+*.g.dart
+*.freezed.dart
+
+# 2. FILE CẤU HÌNH FIREBASE (Bổ sung bắt buộc để tiết kiệm token và bảo mật)
+lib/firebase_options.dart
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+.firebase/
+firestore.indexes.json
+firestore.rules
+database.rules.json
+
+# 3. File cấu hình và quản lý package
+pubspec.lock
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# 4. Thư mục của IDE và Hệ điều hành
+.idea/
+.vscode/
+.DS_Store
+
+# 5. Thư mục Native (Chặn triệt để vì Firebase sinh rất nhiều file tạm ở đây)
+android/.gradle/
+android/app/build/
+ios/Flutter/
+ios/.symlinks/
